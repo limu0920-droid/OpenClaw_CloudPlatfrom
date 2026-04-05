@@ -1,0 +1,255 @@
+# Platform-level Docker Compose example for OpenClaw multi-user deployment.
+# This file is for architecture review, not direct production rollout.
+
+name: openclaw-platform
+
+services:
+  reverse-proxy:
+    image: caddy:2.9
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - portal-web
+      - admin-web
+      - platform-api
+      - openclaw-gateway
+    networks:
+      - edge
+      - control
+
+  portal-web:
+    image: your-registry/portal-web:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORTAL_API_BASE_URL: https://api.example.com
+    mem_limit: 512m
+    cpus: 0.50
+    expose:
+      - "3000"
+    networks:
+      - control
+
+  admin-web:
+    image: your-registry/admin-web:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      ADMIN_API_BASE_URL: https://api.example.com
+    mem_limit: 768m
+    cpus: 0.75
+    expose:
+      - "3001"
+    networks:
+      - control
+
+  platform-api:
+    image: your-registry/platform-api:latest
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgresql://platform:change-me@postgres:5432/platform
+      REDIS_URL: redis://redis:6379/0
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: openclaw-platform
+      OBJECT_STORAGE_ACCESS_KEY: minioadmin
+      OBJECT_STORAGE_SECRET_KEY: change-me
+      RUNTIME_AGENT_URL: http://runtime-agent:8090
+      METRICS_PROVIDER_URL: http://prometheus:9090
+      LOG_PROVIDER_URL: http://loki:3100
+    mem_limit: 1536m
+    cpus: 1.50
+    expose:
+      - "8080"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - runtime-agent
+    networks:
+      - control
+
+  job-worker:
+    image: your-registry/platform-api:latest
+    restart: unless-stopped
+    command: ["./bin/job-worker"]
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql://platform:change-me@postgres:5432/platform
+      REDIS_URL: redis://redis:6379/0
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: openclaw-platform
+      OBJECT_STORAGE_ACCESS_KEY: minioadmin
+      OBJECT_STORAGE_SECRET_KEY: change-me
+      RUNTIME_AGENT_URL: http://runtime-agent:8090
+    mem_limit: 1024m
+    cpus: 1.00
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - runtime-agent
+    networks:
+      - control
+
+  runtime-agent:
+    image: your-registry/runtime-agent:latest
+    restart: unless-stopped
+    environment:
+      AGENT_PORT: 8090
+      DOCKER_HOST: unix:///var/run/docker.sock
+    mem_limit: 512m
+    cpus: 0.75
+    expose:
+      - "8090"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - control
+
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:latest
+    restart: unless-stopped
+    # Docker memory + swap note:
+    # 1.5 GiB RAM + 2 GiB extra swap => memory=1536m, memswap_limit=3584m.
+    mem_limit: 1536m
+    memswap_limit: 3584m
+    cpus: 2.00
+    environment:
+      NODE_ENV: production
+    volumes:
+      - openclaw_home:/home/node/.openclaw
+      - openclaw_workspace:/workspace
+      - ./config/openclaw.json:/home/node/.openclaw/openclaw.json:ro
+    expose:
+      - "18789"
+    networks:
+      - control
+    depends_on:
+      - postgres
+      - redis
+    # If reverse-proxy or other containers must reach OpenClaw, the OpenClaw config
+    # should bind to the container network rather than loopback-only mode.
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: platform
+      POSTGRES_USER: platform
+      POSTGRES_PASSWORD: change-me
+    mem_limit: 4096m
+    cpus: 2.00
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - data
+      - control
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    mem_limit: 768m
+    cpus: 0.50
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    networks:
+      - data
+      - control
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: change-me
+    mem_limit: 1024m
+    cpus: 1.00
+    volumes:
+      - minio_data:/data
+    expose:
+      - "9000"
+      - "9001"
+    networks:
+      - data
+      - control
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    mem_limit: 1024m
+    cpus: 1.00
+    expose:
+      - "9090"
+    networks:
+      - control
+
+  loki:
+    image: grafana/loki:latest
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - loki_data:/loki
+    mem_limit: 1024m
+    cpus: 1.00
+    expose:
+      - "3100"
+    networks:
+      - control
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: change-me
+    volumes:
+      - grafana_data:/var/lib/grafana
+    mem_limit: 768m
+    cpus: 0.75
+    expose:
+      - "3000"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - control
+
+networks:
+  edge:
+    driver: bridge
+  control:
+    driver: bridge
+  data:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  redis_data:
+  minio_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  openclaw_home:
+  openclaw_workspace:

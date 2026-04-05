@@ -1,0 +1,15 @@
+.DS_Store
+Thumbs.db
+
+node_modules/
+dist/
+coverage/
+.npm-cache/
+
+.idea/
+.vscode/
+
+apps/web/node_modules/
+apps/web/dist/
+
+*.log
