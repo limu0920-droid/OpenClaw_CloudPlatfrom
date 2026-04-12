@@ -1,9 +1,23 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { computed, onMounted, watchEffect } from 'vue'
+
+import { applyBrandingForRoute, ensureBrandingLoaded } from './lib/brand'
 
 const route = useRoute()
-const themeClass = computed(() => (route.meta.theme === 'admin' ? 'theme-admin' : 'theme-portal'))
+const themeClass = computed(() => {
+  if (route.meta.theme === 'admin') return 'theme-admin'
+  if (route.meta.theme === 'marketing') return 'theme-marketing'
+  return 'theme-portal'
+})
+
+onMounted(() => {
+  void ensureBrandingLoaded()
+})
+
+watchEffect(() => {
+  applyBrandingForRoute(route.path, String(route.meta.theme ?? 'portal'))
+})
 </script>
 
 <template>

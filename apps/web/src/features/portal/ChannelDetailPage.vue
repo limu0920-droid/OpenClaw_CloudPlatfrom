@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 
@@ -15,11 +16,26 @@ const error = ref('')
 const disconnecting = ref(false)
 const checking = ref(false)
 
-const healthTone = computed(() => {
-  if (!detail.value?.health) return 'neutral'
-  if (detail.value.health === 'critical') return 'critical'
+const channelTabs = [
+  { key: 'overview', label: '概览', subtitle: '授权 / 健康 / 指标' },
+  { key: 'activity', label: '活动', subtitle: '最近动作 / 连接轨迹' },
+  { key: 'entrypoints', label: '回调与入口', subtitle: 'Webhook / 会话入口' },
+]
+
+type TagTone = 'success' | 'warning' | 'danger' | 'info' | 'primary' | undefined
+
+const healthTone = computed<TagTone>(() => {
+  if (!detail.value?.health) return undefined
+  if (detail.value.health === 'critical') return 'danger'
   if (detail.value.health === 'warning') return 'warning'
-  return 'good'
+  return 'success'
+})
+
+const statusTone = computed<TagTone>(() => {
+  if (!detail.value?.status) return undefined
+  if (detail.value.status === 'connected') return 'success'
+  if (detail.value.status === 'pending' || detail.value.status === 'degraded') return 'warning'
+  return 'danger'
 })
 
 async function load(id: string) {
@@ -70,10 +86,10 @@ watch(
 </script>
 
 <template>
-  <div v-if="loading" class="card state-card">正在加载渠道详情…</div>
-  <div v-else-if="error" class="card state-card state-card--error">{{ error }}</div>
+  <el-card v-if="loading" shadow="never" class="state-card">正在加载渠道详情…</el-card>
+  <el-alert v-else-if="error" :closable="false" show-icon type="error" :title="error" />
   <div v-else-if="detail" class="stack">
-    <div class="card hero">
+    <el-card shadow="never" class="hero">
       <div>
         <div class="eyebrow">Channel Detail</div>
         <h2>{{ detail.name }}</h2>
@@ -82,72 +98,100 @@ watch(
         </p>
       </div>
       <div class="hero-actions">
-        <span :class="['status', detail.status]">{{ detail.status }}</span>
-        <button class="ghost" @click="router.back()">返回</button>
-        <button class="ghost" :disabled="checking" @click="checkHealth">
-          {{ checking ? '检查中…' : '健康检查' }}
-        </button>
-        <button class="primary" :disabled="disconnecting" @click="disconnect">
-          {{ disconnecting ? '断开中…' : '断开连接' }}
-        </button>
+        <el-tag :type="statusTone" round disable-transitions>{{ detail.status }}</el-tag>
+        <el-button plain @click="router.back()">返回</el-button>
+        <el-button plain :loading="checking" @click="checkHealth">健康检查</el-button>
+        <el-button type="primary" :loading="disconnecting" @click="disconnect">断开连接</el-button>
       </div>
-    </div>
+    </el-card>
 
-    <div class="detail-grid">
-      <div class="card panel">
-        <SectionHeader title="连接信息" subtitle="授权方式与最近活动" />
-        <div class="info-grid">
-          <div>
-            <span class="muted">授权方式</span>
-            <strong>{{ detail.authMode }}</strong>
-          </div>
-          <div>
-            <span class="muted">健康</span>
-            <strong :class="['health', healthTone]">{{ detail.health || 'unknown' }}</strong>
-          </div>
-          <div>
-            <span class="muted">接入时间</span>
-            <strong>{{ detail.connectedAt || '—' }}</strong>
-          </div>
-          <div>
-            <span class="muted">最近活跃</span>
-            <strong>{{ detail.lastActiveAt || '—' }}</strong>
-          </div>
-          <div>
-            <span class="muted">24h 消息</span>
-            <strong>{{ detail.messages24h ?? 0 }}</strong>
-          </div>
-          <div>
-            <span class="muted">成功率</span>
-            <strong>{{ Math.round((detail.successRate ?? 0) * 100) }}%</strong>
-          </div>
-        </div>
-        <div class="activity stack-list">
-          <div v-for="act in detail.recentActivity" :key="act.id" class="stack-item">
-            <strong>{{ act.type }}</strong>
-            <span class="muted">{{ act.description }} · {{ act.time }}</span>
-          </div>
-          <div v-if="!detail.recentActivity?.length" class="muted">暂无活动。</div>
-        </div>
-      </div>
+    <TabGroup class="channel-tabs">
+      <TabList class="channel-tab-list">
+        <Tab v-for="item in channelTabs" :key="item.key" as="template" v-slot="{ selected }">
+          <button :class="['channel-tab', selected ? 'selected' : '']" type="button">
+            <span>{{ item.subtitle }}</span>
+            <strong>{{ item.label }}</strong>
+          </button>
+        </Tab>
+      </TabList>
 
-      <div class="card panel">
-        <SectionHeader title="Webhook / 回调" subtitle="用于事件推送与消息分发" />
-        <p class="muted">{{ detail.webhookUrl || '未配置回调地址' }}</p>
-        <p class="muted" v-if="detail.callbackSecret">签名密钥：{{ detail.callbackSecret }}</p>
-      </div>
+      <TabPanels class="channel-tab-panels">
+        <TabPanel class="channel-tab-panel">
+          <el-card shadow="never" class="panel">
+            <SectionHeader title="连接信息" subtitle="授权方式、健康与最近活跃" />
+            <div class="info-grid">
+              <div class="info-card">
+                <span class="muted">授权方式</span>
+                <strong>{{ detail.authMode }}</strong>
+              </div>
+              <div class="info-card">
+                <span class="muted">健康</span>
+                <el-tag :type="healthTone" round disable-transitions>{{ detail.health || 'unknown' }}</el-tag>
+              </div>
+              <div class="info-card">
+                <span class="muted">接入时间</span>
+                <strong>{{ detail.connectedAt || '—' }}</strong>
+              </div>
+              <div class="info-card">
+                <span class="muted">最近活跃</span>
+                <strong>{{ detail.lastActiveAt || '—' }}</strong>
+              </div>
+              <div class="info-card">
+                <span class="muted">24h 消息</span>
+                <strong>{{ detail.messages24h ?? 0 }}</strong>
+              </div>
+              <div class="info-card">
+                <span class="muted">成功率</span>
+                <strong>{{ Math.round((detail.successRate ?? 0) * 100) }}%</strong>
+              </div>
+            </div>
+          </el-card>
+        </TabPanel>
 
-      <div class="card panel">
-        <SectionHeader title="会话入口" subtitle="跳转到渠道原生界面" />
-        <div class="stack-list">
-          <div v-for="entry in detail.entrypoints" :key="entry.url" class="stack-item">
-            <strong>{{ entry.label }}</strong>
-            <span class="muted">{{ entry.url }}</span>
+        <TabPanel class="channel-tab-panel">
+          <el-card shadow="never" class="panel">
+            <SectionHeader title="最近活动" subtitle="用于排查连接和消息同步问题" />
+            <div class="stack-list">
+              <div v-for="act in detail.recentActivity" :key="act.id" class="stack-item">
+                <strong>{{ act.type }}</strong>
+                <span class="muted">{{ act.description }}</span>
+                <span class="stack-time">{{ act.time }}</span>
+              </div>
+              <div v-if="!detail.recentActivity?.length" class="muted">暂无活动。</div>
+            </div>
+          </el-card>
+        </TabPanel>
+
+        <TabPanel class="channel-tab-panel">
+          <div class="detail-grid">
+            <el-card shadow="never" class="panel">
+              <SectionHeader title="Webhook / 回调" subtitle="用于事件推送与消息分发" />
+              <div class="stack-list">
+                <div class="stack-item">
+                  <strong>Webhook URL</strong>
+                  <span class="muted">{{ detail.webhookUrl || '未配置回调地址' }}</span>
+                </div>
+                <div v-if="detail.callbackSecret" class="stack-item">
+                  <strong>签名密钥</strong>
+                  <span class="muted">{{ detail.callbackSecret }}</span>
+                </div>
+              </div>
+            </el-card>
+
+            <el-card shadow="never" class="panel">
+              <SectionHeader title="会话入口" subtitle="跳转到渠道原生界面" />
+              <div class="stack-list">
+                <div v-for="entry in detail.entrypoints" :key="entry.url" class="stack-item">
+                  <strong>{{ entry.label }}</strong>
+                  <span class="muted">{{ entry.url }}</span>
+                </div>
+                <div v-if="!detail.entrypoints?.length" class="muted">暂无入口。</div>
+              </div>
+            </el-card>
           </div>
-          <div v-if="!detail.entrypoints?.length" class="muted">暂无入口。</div>
-        </div>
-      </div>
-    </div>
+        </TabPanel>
+      </TabPanels>
+    </TabGroup>
   </div>
 </template>
 
@@ -158,8 +202,12 @@ watch(
   gap: 14px;
 }
 
+.state-card {
+  padding: 24px;
+  text-align: center;
+}
+
 .hero {
-  padding: 18px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -169,8 +217,58 @@ watch(
 
 .hero-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+.channel-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.channel-tab-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.channel-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 16px 18px;
+  text-align: left;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.channel-tab span {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.channel-tab strong {
+  font-size: 1.05rem;
+  font-variation-settings: "wght" 650;
+}
+
+.channel-tab.selected {
+  border-color: rgba(29, 107, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 244, 255, 0.98));
+  box-shadow: 0 18px 40px rgba(29, 107, 255, 0.08);
+}
+
+.channel-tab-panels,
+.channel-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .detail-grid {
@@ -187,21 +285,16 @@ watch(
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 12px;
 }
 
-.health.good {
-  color: #15803d;
-}
-.health.warning {
-  color: #ca8a04;
-}
-.health.critical {
-  color: #b91c1c;
-}
-
-.activity {
-  margin-top: 8px;
+.info-card,
+.stack-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--panel-muted);
 }
 
 .stack-list {
@@ -210,47 +303,20 @@ watch(
   gap: 10px;
 }
 
-.stack-item {
-  padding: 10px 12px;
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-md);
-  background: var(--panel-muted);
-}
-
-.status {
-  padding: 8px 12px;
-  border-radius: 999px;
+.stack-time {
+  color: var(--text-muted);
   font-size: 12px;
-  text-transform: lowercase;
-}
-
-.status.connected {
-  background: rgba(52, 211, 153, 0.18);
-  color: #0f5132;
-}
-
-.status.pending {
-  background: rgba(251, 191, 36, 0.18);
-  color: #92400e;
-}
-
-.status.degraded {
-  background: rgba(245, 158, 11, 0.18);
-  color: #92400e;
-}
-
-.status.error,
-.status.disconnected {
-  background: rgba(248, 113, 113, 0.18);
-  color: #b91c1c;
 }
 
 @media (max-width: 900px) {
+  .hero,
+  .channel-tab-list,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hero {
     flex-direction: column;
-  }
-  .hero-actions {
-    align-items: flex-start;
   }
 }
 </style>

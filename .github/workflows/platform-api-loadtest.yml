@@ -1,0 +1,52 @@
+name: platform-api-loadtest
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/platform-api/**"
+      - ".temp/dev-stack/**"
+      - "perf/platform-api/**"
+      - ".github/workflows/platform-api-loadtest.yml"
+
+jobs:
+  loadtest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/platform-api/go.mod
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Start Dev Stack
+        shell: pwsh
+        run: ./.temp/dev-stack/up.ps1 -WithAPI -Build -Wait
+
+      - name: Run k6 Smoke
+        shell: pwsh
+        run: .\perf\platform-api\run-k6.ps1 -BaseUrl http://127.0.0.1:18080 -SummaryOutput .\perf\platform-api\k6-summary.json
+
+      - name: Validate k6 Summary
+        shell: pwsh
+        run: .\perf\platform-api\compare-k6.ps1 -Summary .\perf\platform-api\k6-summary.json
+
+      - name: Upload k6 Summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-api-k6-summary
+          path: .\perf\platform-api\k6-summary.json
+
+      - name: Stop Dev Stack
+        if: always()
+        shell: pwsh
+        run: ./.temp/dev-stack/down.ps1 -RemoveVolumes
+
+
+

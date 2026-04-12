@@ -32,6 +32,21 @@ const submitting = ref(false)
 
 const filteredChannels = computed<Channel[]>(() => channels.value ?? [])
 
+function statusTagType(status: Channel['status']) {
+  if (status === 'connected') return 'success'
+  if (status === 'pending') return 'warning'
+  if (status === 'degraded') return 'warning'
+  return 'danger'
+}
+
+function openDocs() {
+  window.open('/api/v1/docs/external/integration.md', '_blank', 'noopener,noreferrer')
+}
+
+function scrollToConnect() {
+  document.getElementById('connect')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 async function connect() {
   connectMsg.value = ''
   connectError.value = ''
@@ -50,7 +65,7 @@ async function connect() {
 
 <template>
   <div class="stack">
-    <div class="card hero">
+    <el-card shadow="never" class="hero">
       <div>
         <div class="eyebrow">Channels</div>
         <h2>一键接入第三方聊天平台</h2>
@@ -58,83 +73,76 @@ async function connect() {
           支持飞书、企微、钉钉、Slack、Telegram、Discord、WhatsApp 等常见渠道。连接后可在门户侧直接承接会话入口。
         </p>
         <div class="hero-actions">
-          <a class="ghost" href="https://docs" target="_blank">查看接入指南</a>
-          <a class="primary" href="#connect">立即连接</a>
+          <el-button round plain @click="openDocs">查看接入指南</el-button>
+          <el-button round type="primary" @click="scrollToConnect">立即连接</el-button>
         </div>
       </div>
-    </div>
+    </el-card>
 
-    <div id="connect" class="card">
+    <el-card id="connect" shadow="never">
       <SectionHeader title="一键接入" subtitle="选择渠道并提交授权" />
       <div class="form-grid">
         <label>
           <span>渠道</span>
-          <select v-model="connectForm.provider">
-            <option v-for="opt in providerOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
+          <el-select v-model="connectForm.provider">
+            <el-option v-for="opt in providerOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
         </label>
         <label>
           <span>授权方式</span>
-          <select v-model="connectForm.authMode">
-            <option value="oauth">OAuth</option>
-            <option value="qr">扫码</option>
-            <option value="token">Token</option>
-            <option value="webhook">Webhook</option>
-            <option value="custom">自定义</option>
-          </select>
+          <el-select v-model="connectForm.authMode">
+            <el-option label="OAuth" value="oauth" />
+            <el-option label="扫码" value="qr" />
+            <el-option label="Token" value="token" />
+            <el-option label="Webhook" value="webhook" />
+            <el-option label="自定义" value="custom" />
+          </el-select>
         </label>
         <label v-if="connectForm.authMode === 'oauth'">
           <span>回调地址</span>
-          <input v-model="connectForm.redirectUri" placeholder="https://portal.example.com/callback" />
+          <el-input v-model="connectForm.redirectUri" placeholder="https://portal.example.com/callback" />
         </label>
         <label v-if="connectForm.authMode === 'token'">
           <span>Token / Bot Key</span>
-          <input v-model="connectForm.token" placeholder="填写渠道 Token" />
+          <el-input v-model="connectForm.token" placeholder="填写渠道 Token" />
         </label>
-        <button class="primary" :disabled="submitting" @click="connect">
-          {{ submitting ? '连接中…' : '发起连接' }}
-        </button>
+        <el-button type="primary" :loading="submitting" @click="connect">发起连接</el-button>
       </div>
-      <div class="feedback">
-        <span v-if="connectError" class="error">{{ connectError }}</span>
-        <span v-else-if="connectMsg" class="success">{{ connectMsg }}</span>
-      </div>
-    </div>
+      <el-alert v-if="connectError" :closable="false" show-icon type="error" :title="connectError" />
+      <el-alert v-else-if="connectMsg" :closable="false" show-icon type="success" :title="connectMsg" />
+    </el-card>
 
-    <div class="card">
+    <el-card shadow="never">
       <SectionHeader title="渠道列表" subtitle="连接状态、健康检查、最近活动" />
       <div v-if="loading" class="state-card">正在加载渠道…</div>
-      <div v-else-if="error" class="state-card state-card--error">{{ error }}</div>
+      <el-alert v-else-if="error" :closable="false" show-icon type="error" :title="error" />
       <div v-else class="channel-grid">
-        <RouterLink
-          v-for="ch in filteredChannels"
-          :key="ch.id"
-          :to="`/portal/channels/${ch.id}`"
-          class="channel-card"
-        >
-          <div class="channel-head">
-            <div>
-              <div class="label">{{ ch.name }}</div>
-              <div class="muted">{{ ch.provider }}</div>
+        <el-card v-for="ch in filteredChannels" :key="ch.id" shadow="hover" class="channel-card">
+          <RouterLink :to="`/portal/channels/${ch.id}`" class="channel-link">
+            <div class="channel-head">
+              <div>
+                <div class="label">{{ ch.name }}</div>
+                <div class="muted">{{ ch.provider }}</div>
+              </div>
+              <el-tag :type="statusTagType(ch.status)" round disable-transitions>{{ ch.status }}</el-tag>
             </div>
-            <span :class="['status', ch.status]">{{ ch.status }}</span>
-          </div>
-          <div class="muted">授权方式：{{ ch.authMode }}</div>
-          <div class="muted">24h 消息：{{ ch.messages24h ?? 0 }} · 成功率：{{ Math.round((ch.successRate ?? 0) * 100) }}%</div>
-          <div class="activity">
-            <div v-for="act in ch.recentActivity" :key="act.id" class="pill pill-ghost">
-              {{ act.description }}
+            <div class="muted">授权方式：{{ ch.authMode }}</div>
+            <div class="muted">24h 消息：{{ ch.messages24h ?? 0 }} · 成功率：{{ Math.round((ch.successRate ?? 0) * 100) }}%</div>
+            <div class="activity">
+              <el-tag v-for="act in ch.recentActivity" :key="act.id" round effect="plain" disable-transitions>
+                {{ act.description }}
+              </el-tag>
             </div>
-          </div>
-          <div class="entrance" v-if="ch.entrypoints?.length">
-            <span class="muted">入口</span>
-            <div class="links">
-              <span v-for="entry in ch.entrypoints" :key="entry.url" class="pill">{{ entry.label }}</span>
+            <div v-if="ch.entrypoints?.length" class="entrance">
+              <span class="muted">入口</span>
+              <div class="links">
+                <el-tag v-for="entry in ch.entrypoints" :key="entry.url" round disable-transitions>{{ entry.label }}</el-tag>
+              </div>
             </div>
-          </div>
-        </RouterLink>
+          </RouterLink>
+        </el-card>
       </div>
-    </div>
+    </el-card>
   </div>
 </template>
 
@@ -160,7 +168,7 @@ async function connect() {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
-  align-items: center;
+  align-items: end;
 }
 
 label {
@@ -171,31 +179,6 @@ label {
   font-size: 13px;
 }
 
-input,
-select {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--stroke);
-  background: #fff;
-}
-
-button.primary {
-  height: 44px;
-}
-
-.feedback {
-  min-height: 20px;
-  margin-top: 6px;
-}
-
-.error {
-  color: #b91c1c;
-}
-
-.success {
-  color: #15803d;
-}
-
 .channel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -203,17 +186,12 @@ button.primary {
 }
 
 .channel-card {
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-lg);
-  background: var(--panel);
-  box-shadow: var(--shadow-soft);
+  height: 100%;
 }
 
-.channel-card:hover {
-  border-color: var(--brand);
+.channel-link {
+  display: grid;
+  gap: 8px;
 }
 
 .channel-head {
@@ -226,47 +204,23 @@ button.primary {
   font-weight: 700;
 }
 
-.status {
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  text-transform: lowercase;
-}
-
-.status.connected {
-  background: rgba(52, 211, 153, 0.16);
-  color: #0f5132;
-}
-
-.status.pending {
-  background: rgba(251, 191, 36, 0.18);
-  color: #92400e;
-}
-
-.status.degraded {
-  background: rgba(245, 158, 11, 0.18);
-  color: #92400e;
-}
-
-.status.disconnected,
-.status.error {
-  background: rgba(248, 113, 113, 0.18);
-  color: #b91c1c;
-}
-
 .activity {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.pill-ghost {
-  background: var(--panel-muted);
-}
-
 .entrance .links {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.state-card {
+  padding: 18px;
+  border: 1px dashed var(--stroke);
+  border-radius: var(--radius-lg);
+  background: var(--panel-muted);
+  text-align: center;
 }
 </style>

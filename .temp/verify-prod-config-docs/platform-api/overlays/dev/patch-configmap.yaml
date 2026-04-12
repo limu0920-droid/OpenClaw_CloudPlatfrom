@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-platform-api-config
+data:
+  PLATFORM_STRICT_MODE: "false"
+  AUTO_MIGRATE: "false"
+  AUTO_BOOTSTRAP: "false"
+  RUNTIME_PROVIDER: "mock"
+  KEYCLOAK_ENABLED: "false"
+  OPENSEARCH_URL: "http://opensearch.openclaw-system.svc.cluster.local:9200"
+  REDIS_URL: "redis://redis.openclaw-system.svc.cluster.local:6379/0"
+  OBJECT_STORAGE_ENDPOINT: "http://minio.openclaw-system.svc.cluster.local:9000"
+

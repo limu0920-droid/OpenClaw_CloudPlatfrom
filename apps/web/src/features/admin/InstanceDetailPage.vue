@@ -3,10 +3,12 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import SectionHeader from '../../components/SectionHeader.vue'
+import InstanceDiagnosticsPanel from './components/InstanceDiagnosticsPanel.vue'
+import { formatAccessEntryType } from '../../lib/access'
 import { api } from '../../lib/api'
 import type { AdminInstanceDetail } from '../../lib/types'
 
-type DetailTab = 'overview' | 'monitoring' | 'logs' | 'config' | 'audit'
+type DetailTab = 'overview' | 'monitoring' | 'diagnostics' | 'logs' | 'config' | 'audit'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,10 +16,15 @@ const router = useRouter()
 const detail = ref<AdminInstanceDetail | null>(null)
 const loading = ref(true)
 const error = ref('')
+const creatingApproval = ref('')
+const approvalFeedback = ref('')
+const approvalError = ref('')
+const scaleReplicas = ref(2)
 
 const tabs: Array<{ key: DetailTab; label: string; description: string }> = [
   { key: 'overview', label: '概览', description: '实例基础信息、入口与近期动作' },
   { key: 'monitoring', label: '监控', description: '资源趋势与近期告警' },
+  { key: 'diagnostics', label: '诊断', description: '安全终端、录制与命令审计' },
   { key: 'logs', label: '日志', description: '运行日志与实例级事件线索' },
   { key: 'config', label: '配置', description: '当前生效配置与访问策略' },
   { key: 'audit', label: '审计', description: '任务、审计事件与操作痕迹' },
@@ -25,7 +32,7 @@ const tabs: Array<{ key: DetailTab; label: string; description: string }> = [
 
 const activeTab = computed<DetailTab>(() => {
   const tab = route.query.tab
-  if (tab === 'monitoring' || tab === 'logs' || tab === 'config' || tab === 'audit') {
+  if (tab === 'monitoring' || tab === 'diagnostics' || tab === 'logs' || tab === 'config' || tab === 'audit') {
     return tab
   }
   return 'overview'
@@ -46,6 +53,56 @@ async function load(id: string) {
   }
 }
 
+async function requestApproval(type: 'runtime_restart' | 'runtime_stop' | 'runtime_scale' | 'delete_instance') {
+  if (!detail.value) {
+    return
+  }
+
+  creatingApproval.value = type
+  approvalFeedback.value = ''
+  approvalError.value = ''
+
+  try {
+    const metadata: Record<string, string> = {}
+    let reason = ''
+    let riskLevel: 'high' | 'critical' = 'high'
+
+    switch (type) {
+      case 'runtime_restart':
+        reason = '申请对实例执行重启，收口运行时抖动。'
+        break
+      case 'runtime_stop':
+        reason = '申请对实例执行停机控制，阻断风险扩散。'
+        break
+      case 'runtime_scale':
+        reason = `申请将实例扩缩容到 ${scaleReplicas.value} 副本。`
+        metadata.replicas = String(scaleReplicas.value)
+        break
+      default:
+        riskLevel = 'critical'
+        reason = '申请删除实例，请确认备份与回滚策略。'
+        break
+    }
+
+    const response = await api.createApprovalRequest('admin', {
+      approvalType: type,
+      targetType: 'instance',
+      targetId: Number(detail.value.instance.id),
+      instanceId: Number(detail.value.instance.id),
+      riskLevel,
+      reason,
+      comment: '由实例详情页发起，待审批中心处理。',
+      metadata,
+    })
+
+    approvalFeedback.value = `审批单已创建：${response.approval.approvalNo}`
+  } catch (err) {
+    approvalError.value = err instanceof Error ? err.message : '创建审批失败'
+  } finally {
+    creatingApproval.value = ''
+  }
+}
+
 function setTab(tab: DetailTab) {
   void router.replace({
     query: {
@@ -53,6 +110,17 @@ function setTab(tab: DetailTab) {
       tab,
     },
   })
+}
+
+function traceWorkspacePath(traceId?: string, sessionId?: string) {
+  if (!detail.value) {
+    return ''
+  }
+  const query = new URLSearchParams()
+  if (sessionId) query.set('sessionId', sessionId)
+  if (traceId) query.set('traceId', traceId)
+  const suffix = query.toString()
+  return `/admin/instances/${detail.value.instance.id}/workspace${suffix ? `?${suffix}` : ''}`
 }
 
 watch(
@@ -126,9 +194,14 @@ watch(
           <SectionHeader title="访问入口" subtitle="面向租户与管理员的访问落点" />
           <div class="stack-list">
             <div v-for="entry in detail.instance.access" :key="entry.url" class="stack-item">
-              <strong>{{ entry.entryType }}</strong>
+              <strong>{{ formatAccessEntryType(entry.entryType) }}</strong>
               <span class="muted">{{ entry.url }}</span>
             </div>
+          </div>
+          <div class="workspace-actions">
+            <el-button type="primary" plain @click="router.push(`/admin/instances/${detail.instance.id}/workspace`)">
+              进入网页版对话
+            </el-button>
           </div>
         </div>
 
@@ -151,6 +224,35 @@ watch(
               <span class="muted">资源规格</span>
               <strong>{{ detail.instance.spec || '—' }}</strong>
             </div>
+          </div>
+        </div>
+
+        <div class="card panel">
+          <SectionHeader title="高风险动作" subtitle="统一进入审批流再执行" />
+          <div class="danger-actions">
+            <div class="danger-buttons">
+              <el-button plain :loading="creatingApproval === 'runtime_restart'" @click="requestApproval('runtime_restart')">
+                申请重启
+              </el-button>
+              <el-button plain :loading="creatingApproval === 'runtime_stop'" @click="requestApproval('runtime_stop')">
+                申请停机
+              </el-button>
+              <el-button plain :loading="creatingApproval === 'delete_instance'" @click="requestApproval('delete_instance')">
+                申请删除
+              </el-button>
+            </div>
+            <div class="scale-row">
+              <el-input-number v-model="scaleReplicas" :min="1" :max="10" />
+              <el-button plain :loading="creatingApproval === 'runtime_scale'" @click="requestApproval('runtime_scale')">
+                申请扩缩容
+              </el-button>
+            </div>
+            <div class="link-row">
+              <RouterLink to="/admin/approvals">前往审批中心</RouterLink>
+              <RouterLink :to="`/admin/instances/${detail.instance.id}?tab=diagnostics`">前往诊断面板</RouterLink>
+            </div>
+            <el-alert v-if="approvalError" :closable="false" show-icon type="error" :title="approvalError" />
+            <el-alert v-else-if="approvalFeedback" :closable="false" show-icon type="success" :title="approvalFeedback" />
           </div>
         </div>
 
@@ -225,19 +327,74 @@ watch(
             </div>
           </div>
         </div>
+
+        <div class="card panel">
+          <SectionHeader title="Bridge 观察" subtitle="会话、事件与 trace 概览" />
+          <div class="config-grid">
+            <div class="config-item">
+              <span class="muted">Trace 数</span>
+              <strong>{{ detail.bridgeSummary.traceCount }}</strong>
+            </div>
+            <div class="config-item">
+              <span class="muted">事件数</span>
+              <strong>{{ detail.bridgeSummary.eventCount }}</strong>
+            </div>
+            <div class="config-item">
+              <span class="muted">失败 Trace</span>
+              <strong>{{ detail.bridgeSummary.failedTraceCount }}</strong>
+            </div>
+            <div class="config-item">
+              <span class="muted">最近事件</span>
+              <strong>{{ detail.bridgeSummary.lastEventAt || '—' }}</strong>
+            </div>
+          </div>
+          <div v-if="detail.bridgeSummary.recentTraces.length" class="stack-list">
+            <div v-for="trace in detail.bridgeSummary.recentTraces" :key="trace.traceId" class="stack-item">
+              <strong>{{ trace.traceId }}</strong>
+              <span class="muted">
+                {{ trace.status }} · {{ trace.messageCount }} 消息 · {{ trace.eventCount }} 事件 · {{ trace.latestAt }}
+              </span>
+              <small v-if="trace.preview" class="muted">{{ trace.preview }}</small>
+              <RouterLink :to="traceWorkspacePath(trace.traceId, trace.sessionId)">打开 Trace</RouterLink>
+            </div>
+          </div>
+        </div>
+
+        <div class="card panel">
+          <SectionHeader title="相关工作台会话" subtitle="从运维视图反查实例最近会话" />
+          <div v-if="detail.workspaceSessions.length" class="stack-list">
+            <div v-for="session in detail.workspaceSessions" :key="session.id" class="stack-item">
+              <strong>{{ session.title }}</strong>
+              <span class="muted">
+                {{ session.sessionNo }} · {{ session.status }} · {{ session.messageCount }} 消息 · {{ session.updatedAt }}
+              </span>
+              <RouterLink :to="`/admin/instances/${detail.instance.id}/workspace?sessionId=${session.id}`">进入会话</RouterLink>
+            </div>
+          </div>
+          <div v-else class="muted">当前实例还没有关联工作台会话。</div>
+        </div>
       </section>
+    </template>
+
+    <template v-else-if="activeTab === 'diagnostics'">
+      <InstanceDiagnosticsPanel :instance-id="String(detail.instance.id)" />
     </template>
 
     <template v-else-if="activeTab === 'logs'">
       <section class="detail-grid">
         <div class="card panel span-two">
-          <SectionHeader title="运行日志" subtitle="当前以实例级 Mock 日志模拟近期关键事件" />
+          <SectionHeader title="运行日志" subtitle="实例级运行事件与日志线索" />
           <div class="log-list">
             <div v-for="log in detail.runtimeLogs" :key="log.id" class="log-row">
               <span :class="['log-level', `log-level--${log.level}`]">{{ log.level }}</span>
               <strong>{{ log.source }}</strong>
               <span class="muted">{{ log.timestamp }}</span>
               <p>{{ log.message }}</p>
+              <div class="link-row">
+                <RouterLink v-if="log.instancePath" :to="log.instancePath">实例图表</RouterLink>
+                <RouterLink v-if="log.workspacePath" :to="log.workspacePath">工作台上下文</RouterLink>
+                <span v-if="log.traceId" class="muted">Trace {{ log.traceId }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -281,7 +438,7 @@ watch(
           <SectionHeader title="访问策略" subtitle="入口与访问方式" />
           <div class="stack-list">
             <div v-for="entry in detail.instance.access" :key="entry.url" class="stack-item">
-              <strong>{{ entry.entryType }}</strong>
+              <strong>{{ formatAccessEntryType(entry.entryType) }}</strong>
               <span class="muted">{{ entry.url }}</span>
               <small class="muted">mode: {{ entry.accessMode || '—' }}</small>
             </div>
@@ -334,6 +491,21 @@ watch(
   color: #fecaca;
 }
 
+.danger-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.danger-buttons,
+.scale-row,
+.link-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .hero {
   display: flex;
   align-items: flex-start;
@@ -357,7 +529,7 @@ watch(
 
 .tab-strip {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   padding: 10px;
 }

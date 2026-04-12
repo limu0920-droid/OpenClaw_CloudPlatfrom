@@ -1,0 +1,2 @@
+2026/04/09 02:10:06 openclaw platform api listening on :8080 (mode=seeded strictMode=false stateBackend=memory runtimeProvider=mock bootstrap=memory-seed autoMigrate=false)
+exit status 0xffffffff

@@ -1,11 +1,56 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { api } from '../../lib/api'
+import { useBranding } from '../../lib/brand'
 import { useAsyncData } from '../../lib/useAsyncData'
 
 const { data: authConfig } = useAsyncData(() => api.getAuthConfig())
 const { data: authSession } = useAsyncData(() => api.getAuthSession())
+const { brand, features } = useBranding()
+const router = useRouter()
+
+const entryModes = computed(() =>
+  [
+    features.value.portalEnabled
+      ? {
+          key: 'portal',
+          label: 'Portal',
+          subtitle: '租户用户',
+          description: `适合 ${brand.value.name} 的业务、交付和实例使用方。围绕实例、渠道、任务和工单展开。`,
+          actionLabel: '进入 Portal',
+          action: () => router.push('/portal'),
+        }
+      : null,
+    features.value.adminEnabled
+      ? {
+          key: 'admin',
+          label: 'Admin',
+          subtitle: '平台运维',
+          description: `适合 ${brand.value.name} 的平台管理员和运维角色。聚焦租户、任务、告警与审计控制面。`,
+          actionLabel: '进入 Admin',
+          action: () => router.push('/admin'),
+        }
+      : null,
+    {
+      key: 'iam',
+      label: 'IAM',
+      subtitle: '统一认证',
+      description: `当统一认证已启用时，使用 ${brand.value.name} 的身份入口跳转登录；未启用时该入口保持关闭。`,
+      actionLabel: '使用统一登录',
+      action: () => openKeycloak(),
+    },
+  ].filter(Boolean) as Array<{
+    key: string
+    label: string
+    subtitle: string
+    description: string
+    actionLabel: string
+    action: () => void
+  }>,
+)
 
 async function openKeycloak() {
   const response = await api.getKeycloakLoginURL(window.location.origin + '/login')
@@ -17,56 +62,88 @@ async function openKeycloak() {
   <div class="login-shell">
     <section class="login-hero">
       <div class="eyebrow">OpenClaw Platform</div>
-      <h1>先进入平台门户，再逐步接入真实 IAM 与实例编排。</h1>
+      <h1>通过 {{ brand.name }} 门户进入真实 IAM、实例编排和运营控制面。</h1>
       <p>
         这一版登录页参考了轻量企业 SaaS 的入口表达：左侧负责品牌与可信感，右侧负责明确的下一步动作。
       </p>
       <div class="login-hero__stats">
-        <div class="card">
+        <el-card shadow="never" class="metric-card">
           <strong>2 套壳层</strong>
           <span>Portal 与 Admin 分离</span>
-        </div>
-        <div class="card">
-          <strong>Go Mock API</strong>
+        </el-card>
+        <el-card shadow="never" class="metric-card">
+          <strong>{{ brand.name }}</strong>
           <span>已接通实例、任务、告警接口</span>
-        </div>
-        <div class="card">
+        </el-card>
+        <el-card shadow="never" class="metric-card">
           <strong>Keycloak</strong>
-          <span>{{ authConfig?.enabled ? '已配置接入骨架' : '当前未启用，仍可使用本地演示入口' }}</span>
-        </div>
+          <span>{{ authConfig?.enabled ? '已接入统一认证' : '当前未启用统一认证' }}</span>
+        </el-card>
       </div>
     </section>
 
-    <section class="login-panel card">
+    <el-card shadow="never" class="login-panel">
       <div class="eyebrow">安全登录</div>
       <h2>选择你的入口</h2>
-      <p class="muted">当前已接入 Keycloak 配置骨架。未启用时仍可直接进入 Portal / Admin 演示模式。</p>
-      <div class="login-actions">
-        <RouterLink class="primary" to="/portal">进入 Portal</RouterLink>
-        <RouterLink class="ghost" to="/admin">进入 Admin</RouterLink>
-        <button v-if="authConfig?.enabled" class="ghost" type="button" @click="openKeycloak">使用 Keycloak 登录</button>
-      </div>
+      <p class="muted">当前页面承接统一认证与控制台入口；未启用的认证提供方会保持关闭。</p>
+      <TabGroup class="login-tabs">
+        <TabList class="login-tab-list">
+          <Tab v-for="mode in entryModes" :key="mode.key" as="template" v-slot="{ selected }">
+            <button :class="['login-tab', selected ? 'selected' : '']" type="button">
+              <span>{{ mode.subtitle }}</span>
+              <strong>{{ mode.label }}</strong>
+            </button>
+          </Tab>
+        </TabList>
+        <TabPanels class="login-tab-panels">
+          <TabPanel v-for="mode in entryModes" :key="mode.key" class="login-tab-panel">
+            <div class="login-tab-panel__copy">
+              <div class="eyebrow eyebrow-soft">{{ mode.subtitle }}</div>
+              <h3>{{ mode.label }}</h3>
+              <p>{{ mode.description }}</p>
+            </div>
+            <el-button
+              round
+              size="large"
+              :type="mode.key === 'portal' ? 'primary' : 'default'"
+              :plain="mode.key !== 'portal'"
+              :disabled="mode.key === 'iam' && (!authConfig?.enabled || !features.ssoEnabled)"
+              @click="mode.action"
+            >
+              {{ mode.key === 'iam' && (!authConfig?.enabled || !features.ssoEnabled) ? '统一认证未启用' : mode.actionLabel }}
+            </el-button>
+          </TabPanel>
+        </TabPanels>
+      </TabGroup>
       <div class="login-form">
         <label>
           <span>租户 / 邮箱</span>
-          <input :value="authSession?.user?.email || 'acme@example.com'" readonly />
+          <el-input :model-value="authSession?.user?.email || 'acme@example.com'" readonly />
         </label>
         <label>
           <span>当前身份 / 模式</span>
-          <textarea readonly>{{
-            authSession?.authenticated
-              ? `provider: ${authSession.provider}\nuser: ${authSession.user?.name}\nrole: ${authSession.user?.role}`
-              : `当前页面只做入口承接。\nPortal 面向租户用户，Admin 面向平台运维与审计角色。\n若配置了 Keycloak，可使用统一 IAM 登录。`
-          }}</textarea>
+          <el-input
+            :model-value="
+              authSession?.authenticated
+                ? `provider: ${authSession.provider}\nuser: ${authSession.user?.name}\nrole: ${authSession.user?.role}`
+                : `当前页面只做入口承接。\nPortal 面向租户用户，Admin 面向平台运维与审计角色。\n若配置了 Keycloak，可使用统一 IAM 登录。`
+            "
+            type="textarea"
+            :autosize="{ minRows: 5, maxRows: 7 }"
+            readonly
+          />
         </label>
         <label v-if="authConfig">
           <span>Keycloak 配置</span>
-          <textarea readonly>{{
-            `enabled: ${authConfig.enabled}\nrealm: ${authConfig.realm || '-'}\nclientId: ${authConfig.clientId || '-'}\nredirect: ${authConfig.defaultRedirect || '-'}`
-          }}</textarea>
+          <el-input
+            :model-value="`enabled: ${authConfig.enabled}\nrealm: ${authConfig.realm || '-'}\nclientId: ${authConfig.clientId || '-'}\nredirect: ${authConfig.defaultRedirect || '-'}`"
+            type="textarea"
+            :autosize="{ minRows: 4, maxRows: 6 }"
+            readonly
+          />
         </label>
       </div>
-    </section>
+    </el-card>
   </div>
 </template>
 
@@ -117,16 +194,12 @@ async function openKeycloak() {
   gap: 14px;
 }
 
-.login-hero__stats .card {
-  padding: 18px;
-}
-
-.login-hero__stats strong {
+.metric-card strong {
   display: block;
   font-size: 1.3rem;
 }
 
-.login-hero__stats span {
+.metric-card span {
   display: block;
   margin-top: 8px;
   color: var(--text-muted);
@@ -143,29 +216,85 @@ async function openKeycloak() {
 
 .login-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 20px;
 }
 
-.primary,
-.ghost {
-  display: inline-flex;
+.login-tabs {
+  margin-top: 24px;
+}
+
+.login-tab-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.login-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 16px 18px;
+  text-align: left;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.login-tab span {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-tab strong {
+  font-size: 1.08rem;
+  font-variation-settings: "wght" 650;
+}
+
+.login-tab.selected {
+  border-color: rgba(29, 107, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 244, 255, 0.98));
+  box-shadow: 0 18px 40px rgba(29, 107, 255, 0.08);
+}
+
+.login-tab-panels {
+  margin-top: 12px;
+}
+
+.login-tab-panel {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  min-width: 150px;
-  padding: 12px 18px;
-  border-radius: 999px;
-  border: 1px solid var(--stroke);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(243, 247, 255, 0.98));
 }
 
-.primary {
-  color: #fff;
-  background: linear-gradient(120deg, var(--brand), var(--brand-strong));
-  border-color: transparent;
+.login-tab-panel__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.ghost {
-  background: var(--panel-muted);
+.login-tab-panel__copy h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.login-tab-panel__copy p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+.eyebrow-soft {
+  background: rgba(29, 107, 255, 0.06);
 }
 
 .login-form {
@@ -184,21 +313,6 @@ async function openKeycloak() {
   color: var(--text-muted);
 }
 
-.login-form input,
-.login-form textarea {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--stroke);
-  background: var(--panel-muted);
-  color: var(--text);
-}
-
-.login-form textarea {
-  min-height: 128px;
-  resize: none;
-}
-
 @media (max-width: 980px) {
   .login-shell {
     grid-template-columns: 1fr;
@@ -207,6 +321,15 @@ async function openKeycloak() {
 
   .login-hero__stats {
     grid-template-columns: 1fr;
+  }
+
+  .login-tab-list {
+    grid-template-columns: 1fr;
+  }
+
+  .login-tab-panel {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

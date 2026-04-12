@@ -1,56 +1,71 @@
 <script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
 
-const nav = [
-  { label: '概览', to: '/portal' },
-  { label: '实例', to: '/portal/instances' },
-  { label: '渠道', to: '/portal/channels' },
-  { label: '工单', to: '/portal/tickets' },
-  { label: '任务', to: '/portal/jobs' },
-  { label: '日志', to: '/portal/logs' },
-]
+import { useBranding } from '../lib/brand'
+
+const baseNav = [
+  { label: '自助中心', to: '/portal', feature: 'portalEnabled' },
+  { label: '产物', to: '/portal/artifacts', feature: 'portalEnabled' },
+  { label: '实例', to: '/portal/instances', feature: 'portalEnabled' },
+  { label: '渠道', to: '/portal/channels', feature: 'channelsEnabled' },
+  { label: '工单', to: '/portal/tickets', feature: 'ticketsEnabled' },
+  { label: '运营', to: '/portal/operations', feature: 'portalEnabled' },
+  { label: '任务', to: '/portal/jobs', feature: 'portalEnabled' },
+  { label: '日志', to: '/portal/logs', feature: 'portalEnabled' },
+] as const
 
 const route = useRoute()
-const active = computed(() => route.path)
+const router = useRouter()
+const { brand, features } = useBranding()
+const nav = computed(() =>
+  baseNav.filter((item) => {
+    const key = item.feature
+    return key ? Boolean(features.value[key]) : true
+  }),
+)
+const currentMenu = computed(
+  () => nav.value.find((item) => (item.to === '/portal' ? route.path === item.to : route.path.startsWith(item.to)))?.to ?? '/portal',
+)
 </script>
 
 <template>
   <div class="portal-shell">
-    <aside class="portal-nav card">
+    <el-card shadow="never" class="portal-nav">
       <div class="brand">
-        <div class="brand-mark">OC</div>
+        <div class="brand-mark">
+          <img v-if="brand.logoUrl" :src="brand.logoUrl" :alt="brand.name" class="brand-logo" />
+          <span v-else>{{ brand.name.slice(0, 2).toUpperCase() }}</span>
+        </div>
         <div>
-          <div class="brand-title">OpenClaw</div>
-          <div class="brand-sub">Portal</div>
+          <div class="brand-title">{{ brand.name }}</div>
+          <div class="brand-sub">{{ features.portalEnabled ? 'Portal' : 'Brand Workspace' }}</div>
         </div>
       </div>
-      <nav>
-        <RouterLink
-          v-for="item in nav"
-          :key="item.to"
-          :to="item.to"
-          :class="['nav-item', active.startsWith(item.to) ? 'active' : '']"
-        >
-          <span>{{ item.label }}</span>
-        </RouterLink>
-      </nav>
+      <el-scrollbar class="nav-scroll">
+        <el-menu :default-active="currentMenu" :router="true" class="portal-menu">
+          <el-menu-item v-for="item in nav" :key="item.to" :index="item.to">
+            {{ item.label }}
+          </el-menu-item>
+        </el-menu>
+      </el-scrollbar>
       <div class="nav-footer muted">
-        <div>租户：Acme Corp</div>
-        <div class="pill">试用 · 12 天剩余</div>
+        <div>{{ brand.supportEmail || 'Portal 自助使用视角' }}</div>
+        <el-tag round disable-transitions>{{ brand.code || 'Self-Service' }}</el-tag>
       </div>
-    </aside>
+    </el-card>
     <main class="portal-main">
-      <header class="portal-top card">
+      <el-card shadow="never" class="portal-top">
         <div>
-          <div class="muted">OpenClaw 平台入口</div>
-          <div class="page-title">租户控制台</div>
+          <div class="muted">{{ brand.name }} 平台入口</div>
+          <div class="page-title">{{ brand.name }} 租户控制台</div>
         </div>
         <div class="top-actions">
-          <RouterLink class="ghost" to="/portal/logs">帮助与日志</RouterLink>
-          <RouterLink class="primary" to="/portal/instances">实例列表</RouterLink>
+          <el-button round plain @click="router.push('/portal/artifacts')">产物中心</el-button>
+          <el-button round plain @click="router.push('/portal/operations')">运营中心</el-button>
+          <el-button round type="primary" @click="router.push('/portal/instances')">实例列表</el-button>
         </div>
-      </header>
+      </el-card>
       <section class="portal-content">
         <RouterView />
       </section>
@@ -70,11 +85,10 @@ const active = computed(() => route.path)
 .portal-nav {
   position: sticky;
   top: 18px;
-  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: var(--panel);
+  gap: 14px;
+  min-height: calc(100vh - 36px);
 }
 
 .brand {
@@ -97,6 +111,12 @@ const active = computed(() => route.path)
   letter-spacing: 0.5px;
 }
 
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
 .brand-title {
   font-weight: 700;
 }
@@ -106,28 +126,31 @@ const active = computed(() => route.path)
   font-size: 12px;
 }
 
-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.nav-scroll {
+  flex: 1;
 }
 
-.nav-item {
-  padding: 10px 12px;
-  border-radius: 12px;
+.portal-menu {
+  border-right: none;
+  background: transparent;
+}
+
+:deep(.portal-menu .el-menu-item) {
+  height: 46px;
+  margin-bottom: 6px;
+  border-radius: 14px;
   color: var(--text);
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
-.nav-item:hover {
+:deep(.portal-menu .el-menu-item:hover) {
   background: var(--panel-muted);
 }
 
-.nav-item.active {
-  border-color: var(--brand);
+:deep(.portal-menu .el-menu-item.is-active) {
   background: rgba(29, 107, 255, 0.08);
   color: var(--brand);
+  font-variation-settings: "wght" 620;
 }
 
 .nav-footer {
@@ -145,7 +168,6 @@ nav {
 }
 
 .portal-top {
-  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -161,26 +183,6 @@ nav {
   gap: 10px;
 }
 
-.ghost,
-.primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--stroke);
-  background: var(--panel-muted);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.primary {
-  border-color: transparent;
-  background: linear-gradient(120deg, var(--brand), var(--brand-strong));
-  color: #fff;
-  box-shadow: 0 8px 30px rgba(29, 107, 255, 0.35);
-}
-
 .portal-content {
   display: flex;
   flex-direction: column;
@@ -193,13 +195,7 @@ nav {
   }
   .portal-nav {
     position: static;
-    flex-direction: row;
-    gap: 10px;
-    align-items: center;
-  }
-  nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+    min-height: auto;
   }
 }
 </style>

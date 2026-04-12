@@ -1,0 +1,204 @@
+﻿apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/name: openclaw-platform-api
+    app.kubernetes.io/part-of: openclaw-platform
+  name: openclaw-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: openclaw-platform-api
+  name: openclaw-platform-api
+---
+apiVersion: v1
+data:
+  ARTIFACT_PREVIEW_ALLOW_PRIVATE_IP: "false"
+  ARTIFACT_PREVIEW_ALLOWED_HOSTS: minio.openclaw.example.com,api.openclaw.example.com
+  ARTIFACT_PREVIEW_HTML_MAX_BYTES: "2097152"
+  ARTIFACT_PREVIEW_PUBLIC_BASE_URL: https://preview.openclaw.example.com
+  ARTIFACT_PREVIEW_TIMEOUT_SECS: "30"
+  AUTO_BOOTSTRAP: "false"
+  AUTO_MIGRATE: "false"
+  KEYCLOAK_BASE_URL: https://sso.openclaw.example.com
+  KEYCLOAK_CLIENT_ID: openclaw-portal
+  KEYCLOAK_COOKIE_NAME: openclaw_auth
+  KEYCLOAK_COOKIE_SECURE: "true"
+  KEYCLOAK_ENABLED: "true"
+  KEYCLOAK_FLOW_COOKIE_NAME: openclaw_auth_flow
+  KEYCLOAK_LOGOUT_REDIRECT_URL: https://portal.openclaw.example.com/login
+  KEYCLOAK_POST_LOGIN_REDIRECT_URL: https://portal.openclaw.example.com/portal
+  KEYCLOAK_REALM: openclaw
+  KEYCLOAK_REDIRECT_URL: https://portal.openclaw.example.com/login
+  OBJECT_STORAGE_BUCKET: openclaw-prod
+  OBJECT_STORAGE_ENDPOINT: https://minio.openclaw.example.com
+  OBJECT_STORAGE_FORCE_PATH_STYLE: "true"
+  OBJECT_STORAGE_REGION: ""
+  OPENSEARCH_ENABLED: "true"
+  OPENSEARCH_INDEX: openclaw-logs
+  OPENSEARCH_URL: https://opensearch.openclaw.example.com
+  PORT: "8080"
+  REDIS_URL: redis://redis.openclaw-system.svc.cluster.local:6379/0
+  RUNTIME_ACCESS_HOST: host.docker.internal
+  RUNTIME_ACCESS_SCHEME: http
+  RUNTIME_IMAGE: ghcr.io/openclaw/openclaw:latest
+  RUNTIME_NAMESPACE_PREFIX: openclaw
+  RUNTIME_PORT: "18789"
+  RUNTIME_PROVIDER: kubectl
+  RUNTIME_SERVICE_TYPE: NodePort
+  RUNTIME_WORKLOAD_PREFIX: openclaw
+  WECHAT_LOGIN_API_BASE_URL: https://api.weixin.qq.com
+  WECHAT_LOGIN_ENABLED: "false"
+  WECHAT_LOGIN_OPEN_BASE_URL: https://open.weixin.qq.com
+  WECHATPAY_BASE_URL: https://api.mch.weixin.qq.com
+  WECHATPAY_ENABLED: "false"
+  WORKSPACE_BRIDGE_HEADER_NAME: X-Platform-Bridge-Token
+  WORKSPACE_BRIDGE_HEALTH_PATH: /api/v1/platform/workspace/health
+  WORKSPACE_BRIDGE_HISTORY_PATH: /api/v1/platform/workspace/sessions/{sessionNo}/history
+  WORKSPACE_BRIDGE_HISTORY_SYNC: "true"
+  WORKSPACE_BRIDGE_PATH: /api/v1/platform/workspace/messages
+  WORKSPACE_BRIDGE_PUBLIC_BASE_URL: https://api.openclaw.example.com
+  WORKSPACE_BRIDGE_REPORT_PATH: /api/v1/platform/workspace/report
+  WORKSPACE_BRIDGE_RETRY_BACKOFF_MS: "250"
+  WORKSPACE_BRIDGE_RETRY_COUNT: "2"
+  WORKSPACE_BRIDGE_STREAM_PATH: /api/v1/platform/workspace/sessions/{sessionNo}/stream
+  WORKSPACE_BRIDGE_TIMEOUT_SECS: "10"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: openclaw-platform-api
+  name: openclaw-platform-api-config
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app.kubernetes.io/name: openclaw-platform-api
+  name: openclaw-platform-api-bootstrap
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openclaw-platform-api-bootstrap
+    spec:
+      containers:
+      - command:
+        - /usr/local/bin/platform-api-bootstrap
+        envFrom:
+        - configMapRef:
+            name: openclaw-platform-api-config
+        - secretRef:
+            name: openclaw-platform-api-secret
+        image: ghcr.io/openclaw/platform-api:latest
+        imagePullPolicy: IfNotPresent
+        name: bootstrap
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+      restartPolicy: OnFailure
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: openclaw-platform-api
+      volumes:
+      - emptyDir: {}
+        name: tmp
+  ttlSecondsAfterFinished: 300
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: openclaw-platform-api-secret
+spec:
+  data:
+  - remoteRef:
+      key: /change-me/platform-api/prod/DATABASE_URL
+    secretKey: DATABASE_URL
+  - remoteRef:
+      key: /change-me/platform-api/prod/OBJECT_STORAGE_ACCESS_KEY
+    secretKey: OBJECT_STORAGE_ACCESS_KEY
+  - remoteRef:
+      key: /change-me/platform-api/prod/OBJECT_STORAGE_SECRET_KEY
+    secretKey: OBJECT_STORAGE_SECRET_KEY
+  - remoteRef:
+      key: /change-me/platform-api/prod/KEYCLOAK_CLIENT_SECRET
+    secretKey: KEYCLOAK_CLIENT_SECRET
+  - remoteRef:
+      key: /change-me/platform-api/prod/KEYCLOAK_SESSION_SECRET
+    secretKey: KEYCLOAK_SESSION_SECRET
+  - remoteRef:
+      key: /change-me/platform-api/prod/OPENSEARCH_USERNAME
+    secretKey: OPENSEARCH_USERNAME
+  - remoteRef:
+      key: /change-me/platform-api/prod/OPENSEARCH_PASSWORD
+    secretKey: OPENSEARCH_PASSWORD
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_MCH_ID
+    secretKey: WECHATPAY_MCH_ID
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_APP_ID
+    secretKey: WECHATPAY_APP_ID
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_CLIENT_SECRET
+    secretKey: WECHATPAY_CLIENT_SECRET
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_NOTIFY_URL
+    secretKey: WECHATPAY_NOTIFY_URL
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_REFUND_NOTIFY_URL
+    secretKey: WECHATPAY_REFUND_NOTIFY_URL
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_SERIAL_NO
+    secretKey: WECHATPAY_SERIAL_NO
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_PUBLIC_KEY_ID
+    secretKey: WECHATPAY_PUBLIC_KEY_ID
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_PUBLIC_KEY_PEM
+    secretKey: WECHATPAY_PUBLIC_KEY_PEM
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_PRIVATE_KEY_PEM
+    secretKey: WECHATPAY_PRIVATE_KEY_PEM
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_APIV3_KEY
+    secretKey: WECHATPAY_APIV3_KEY
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_MODE
+    secretKey: WECHATPAY_MODE
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_SUB_MCH_ID
+    secretKey: WECHATPAY_SUB_MCH_ID
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHATPAY_SUB_APP_ID
+    secretKey: WECHATPAY_SUB_APP_ID
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHAT_LOGIN_APP_ID
+    secretKey: WECHAT_LOGIN_APP_ID
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHAT_LOGIN_APP_SECRET
+    secretKey: WECHAT_LOGIN_APP_SECRET
+  - remoteRef:
+      key: /change-me/platform-api/prod/WECHAT_LOGIN_REDIRECT_URL
+    secretKey: WECHAT_LOGIN_REDIRECT_URL
+  - remoteRef:
+      key: /change-me/platform-api/prod/WORKSPACE_BRIDGE_TOKEN
+    secretKey: WORKSPACE_BRIDGE_TOKEN
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: change-me-secret-store
+  target:
+    creationPolicy: Owner
+    name: openclaw-platform-api-secret

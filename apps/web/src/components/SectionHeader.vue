@@ -12,7 +12,7 @@ defineProps<{
       <div class="title">{{ title }}</div>
       <div v-if="subtitle" class="subtitle">{{ subtitle }}</div>
     </div>
-    <button v-if="actionLabel" class="ghost">{{ actionLabel }}</button>
+    <el-button v-if="actionLabel" round plain>{{ actionLabel }}</el-button>
   </div>
 </template>
 
@@ -30,13 +30,5 @@ defineProps<{
 .subtitle {
   color: var(--text-muted);
   font-size: 13px;
-}
-.ghost {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--stroke);
-  background: var(--panel-muted);
-  color: var(--text);
-  cursor: pointer;
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 import SectionHeader from '../../components/SectionHeader.vue'
 import { api } from '../../lib/api'
 import { useAsyncData } from '../../lib/useAsyncData'
@@ -10,6 +10,7 @@ const filter = ref('')
 const submitLoading = ref(false)
 const submitError = ref('')
 const submitSuccess = ref('')
+const router = useRouter()
 
 const form = ref<CreateInstancePayload>({
   name: '',
@@ -42,85 +43,91 @@ async function handleCreate() {
 </script>
 
 <template>
-  <div class="card">
-    <SectionHeader title="实例列表" subtitle="当前已通过 Go Mock API 拉取数据" />
+  <el-card shadow="never" class="surface-card">
+    <SectionHeader title="实例列表" subtitle="当前通过平台 API 拉取实例清单" />
     <div class="create-form">
       <div class="form-row">
         <label>
           <span>名称</span>
-          <input v-model="form.name" placeholder="例如：生产环境实例" />
+          <el-input v-model="form.name" placeholder="例如：生产环境实例" />
         </label>
         <label>
           <span>套餐</span>
-          <select v-model="form.plan">
-            <option value="pro">Pro</option>
-            <option value="standard">Standard</option>
-            <option value="trial">Trial</option>
-          </select>
+          <el-select v-model="form.plan">
+            <el-option label="Pro" value="pro" />
+            <el-option label="Standard" value="standard" />
+            <el-option label="Trial" value="trial" />
+          </el-select>
         </label>
         <label>
           <span>地域</span>
-          <select v-model="form.region">
-            <option value="cn-shanghai">cn-shanghai</option>
-            <option value="cn-beijing">cn-beijing</option>
-            <option value="ap-southeast-1">ap-southeast-1</option>
-          </select>
+          <el-select v-model="form.region">
+            <el-option label="cn-shanghai" value="cn-shanghai" />
+            <el-option label="cn-beijing" value="cn-beijing" />
+            <el-option label="ap-southeast-1" value="ap-southeast-1" />
+          </el-select>
         </label>
       </div>
       <div class="form-row">
         <label>
           <span>CPU (vCPU)</span>
-          <input v-model="form.cpu" />
+          <el-input v-model="form.cpu" />
         </label>
         <label>
           <span>内存</span>
-          <input v-model="form.memory" placeholder="例如 4Gi" />
+          <el-input v-model="form.memory" placeholder="例如 4Gi" />
         </label>
-        <button class="primary" :disabled="submitLoading" @click="handleCreate">
-          {{ submitLoading ? '创建中…' : '创建实例' }}
-        </button>
+        <el-button type="primary" :loading="submitLoading" @click="handleCreate">创建实例</el-button>
       </div>
-      <div class="form-feedback">
-        <span v-if="submitError" class="error">{{ submitError }}</span>
-        <span v-else-if="submitSuccess" class="success">{{ submitSuccess }}</span>
-      </div>
+      <el-alert v-if="submitError" :closable="false" show-icon type="error" :title="submitError" />
+      <el-alert v-else-if="submitSuccess" :closable="false" show-icon type="success" :title="submitSuccess" />
     </div>
+
     <div class="toolbar">
-      <input v-model="filter" placeholder="搜索实例..." />
-      <RouterLink class="primary" to="/portal/jobs">查看变更任务</RouterLink>
+      <el-input v-model="filter" placeholder="搜索实例..." clearable />
+      <el-button plain @click="router.push('/portal/jobs')">查看变更任务</el-button>
     </div>
+
     <div v-if="loading" class="state-card">正在加载实例列表…</div>
-    <div v-else-if="error" class="state-card state-card--error">{{ error }}</div>
-    <div v-else class="table">
-      <div class="head">
-        <span>名称</span>
-        <span>状态</span>
-        <span>版本</span>
-        <span>地域</span>
-        <span>更新</span>
-        <span>操作</span>
-      </div>
-      <div v-for="inst in filtered" :key="inst.id" class="row">
-        <div class="name">
-          <div class="strong">{{ inst.name }}</div>
-          <div class="muted">{{ inst.plan }} · {{ inst.code }}</div>
-        </div>
-        <div><span class="pill">{{ inst.status }}</span></div>
-        <div>{{ inst.version }}</div>
-        <div>{{ inst.region }}</div>
-        <div class="muted">{{ inst.updatedAt }}</div>
-        <div class="actions">
-          <RouterLink :to="`/portal/instances/${inst.id}`">详情</RouterLink>
-        </div>
-      </div>
-    </div>
-  </div>
+    <el-alert v-else-if="error" :closable="false" show-icon type="error" :title="error" />
+    <el-table v-else :data="filtered" class="surface-table">
+      <el-table-column label="名称" min-width="240">
+        <template #default="{ row }">
+          <div class="name">
+            <div class="strong">{{ row.name }}</div>
+            <div class="muted">{{ row.plan }} · {{ row.code }}</div>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" min-width="120">
+        <template #default="{ row }">
+          <el-tag round disable-transitions>{{ row.status }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="version" label="版本" min-width="110" />
+      <el-table-column prop="region" label="地域" min-width="130" />
+      <el-table-column prop="updatedAt" label="更新" min-width="180" />
+      <el-table-column label="操作" width="160" fixed="right">
+        <template #default="{ row }">
+          <div class="row-actions">
+            <el-button link type="primary" @click="router.push(`/portal/instances/${row.id}`)">详情</el-button>
+            <el-button link type="primary" @click="router.push(`/portal/instances/${row.id}/workspace`)">对话</el-button>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
+  </el-card>
 </template>
 
 <style scoped>
+.surface-card {
+  overflow: hidden;
+}
+
 .toolbar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -131,10 +138,6 @@ async function handleCreate() {
   border-radius: var(--radius-lg);
   background: var(--panel-muted);
   text-align: center;
-}
-
-.state-card--error {
-  color: #b91c1c;
 }
 
 .create-form {
@@ -152,6 +155,7 @@ async function handleCreate() {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
+  align-items: end;
 }
 
 label {
@@ -162,84 +166,22 @@ label {
   color: var(--text-muted);
 }
 
-input {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--stroke);
-  background: var(--panel-muted);
-}
-
-.create-form input,
-.create-form select {
-  background: #fff;
-}
-
-.primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background: linear-gradient(120deg, var(--brand), var(--brand-strong));
-  color: #fff;
-}
-
-.form-feedback {
-  min-height: 20px;
-  font-size: 13px;
-}
-
-.error {
-  color: #b91c1c;
-}
-
-.success {
-  color: #15803d;
-}
-
-.table {
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.head,
-.row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 1fr;
-  padding: 12px 14px;
-  align-items: center;
-}
-
-.head {
-  background: var(--panel-muted);
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.row {
-  border-top: 1px solid var(--stroke);
-}
-
 .name {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.actions {
+.row-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  align-items: center;
 }
 
 @media (max-width: 1024px) {
-  .head,
-  .row {
-    grid-template-columns: repeat(2, 1fr);
-    row-gap: 8px;
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

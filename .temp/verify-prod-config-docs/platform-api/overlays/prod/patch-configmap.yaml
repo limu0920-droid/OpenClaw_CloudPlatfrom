@@ -1,0 +1,28 @@
+﻿apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-platform-api-config
+data:
+  PLATFORM_STRICT_MODE: "true"
+  AUTO_MIGRATE: "false"
+  AUTO_BOOTSTRAP: "false"
+  RUNTIME_PROVIDER: "kubectl"
+  WORKSPACE_BRIDGE_PUBLIC_BASE_URL: "https://api.openclaw-prod.internal"
+  KEYCLOAK_ENABLED: "true"
+  KEYCLOAK_BASE_URL: "https://sso.openclaw-prod.internal"
+  KEYCLOAK_REDIRECT_URL: "https://portal.openclaw-prod.internal/login"
+  KEYCLOAK_POST_LOGIN_REDIRECT_URL: "https://portal.openclaw-prod.internal/portal"
+  KEYCLOAK_LOGOUT_REDIRECT_URL: "https://portal.openclaw-prod.internal/login"
+  OPENSEARCH_ENABLED: "true"
+  OPENSEARCH_URL: "https://opensearch.openclaw-prod.internal"
+  OBJECT_STORAGE_ENDPOINT: "https://minio.openclaw-prod.internal"
+  ARTIFACT_PREVIEW_PUBLIC_BASE_URL: "https://preview.openclaw-prod.internal"
+  ARTIFACT_PREVIEW_ALLOWED_HOSTS: "minio.openclaw-prod.internal,api.openclaw-prod.internal"
+
+
+
+
+
+
+
+

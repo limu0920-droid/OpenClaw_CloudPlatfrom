@@ -1,0 +1,28 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openclaw-platform-api
+spec:
+  tls:
+    - hosts:
+        - api.openclaw-prod.internal
+      secretName: openclaw-platform-api-tls
+  rules:
+    - host: api.openclaw-prod.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openclaw-platform-api
+                port:
+                  number: 80
+
+
+
+
+
+
+
+

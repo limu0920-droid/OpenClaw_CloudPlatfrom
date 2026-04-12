@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
+
 import { api } from '../../lib/api'
 import { useAsyncData } from '../../lib/useAsyncData'
 
@@ -16,12 +18,17 @@ const { data: alerts, loading, error } = useAsyncData(() => api.getAdminAlerts()
         <span>目标</span>
         <span>级别</span>
         <span>时间</span>
+        <span>联动</span>
       </div>
       <div v-for="alert in alerts" :key="alert.id" class="row">
         <span class="strong">{{ alert.title }}</span>
         <span>{{ alert.target }}</span>
         <span class="pill">{{ alert.severity }}</span>
         <span class="muted">{{ alert.time }}</span>
+        <span class="actions">
+          <RouterLink v-if="alert.detailPath" :to="alert.detailPath">实例图表</RouterLink>
+          <RouterLink v-if="alert.workspacePath" :to="alert.workspacePath">工作台</RouterLink>
+        </span>
       </div>
     </div>
   </div>
@@ -52,7 +59,7 @@ const { data: alerts, loading, error } = useAsyncData(() => api.getAdminAlerts()
 .head,
 .row {
   display: grid;
-  grid-template-columns: 1.6fr 1.2fr 0.9fr 1fr;
+  grid-template-columns: 1.6fr 1.2fr 0.9fr 1fr 0.9fr;
   padding: 12px 14px;
   align-items: center;
 }
@@ -63,5 +70,11 @@ const { data: alerts, loading, error } = useAsyncData(() => api.getAdminAlerts()
 }
 .row {
   border-top: 1px solid var(--stroke);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 </style>

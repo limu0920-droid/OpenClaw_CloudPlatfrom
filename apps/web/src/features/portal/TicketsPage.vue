@@ -45,68 +45,65 @@ async function submitTicket() {
 
 <template>
   <div class="stack">
-    <div class="card panel">
+    <el-card shadow="never" class="panel">
       <SectionHeader title="问题上报 / 工单" subtitle="提交运行问题、资源异常、渠道接入问题或购买咨询" />
       <div class="form-grid">
         <label>
           <span>标题</span>
-          <input v-model="form.title" placeholder="例如：实例 CPU 异常升高" />
+          <el-input v-model="form.title" placeholder="例如：实例 CPU 异常升高" />
         </label>
         <label>
           <span>分类</span>
-          <select v-model="form.category">
-            <option value="general">general</option>
-            <option value="backup">backup</option>
-            <option value="performance">performance</option>
-            <option value="billing">billing</option>
-            <option value="channel">channel</option>
-          </select>
+          <el-select v-model="form.category">
+            <el-option label="general" value="general" />
+            <el-option label="backup" value="backup" />
+            <el-option label="performance" value="performance" />
+            <el-option label="billing" value="billing" />
+            <el-option label="channel" value="channel" />
+          </el-select>
         </label>
         <label>
           <span>优先级</span>
-          <select v-model="form.severity">
-            <option value="low">low</option>
-            <option value="medium">medium</option>
-            <option value="high">high</option>
-          </select>
+          <el-select v-model="form.severity">
+            <el-option label="low" value="low" />
+            <el-option label="medium" value="medium" />
+            <el-option label="high" value="high" />
+          </el-select>
         </label>
       </div>
       <label class="block">
         <span>描述</span>
-        <textarea v-model="form.description" placeholder="描述现象、影响范围、最近操作和期望结果" />
+        <el-input
+          v-model="form.description"
+          type="textarea"
+          :autosize="{ minRows: 5, maxRows: 8 }"
+          placeholder="描述现象、影响范围、最近操作和期望结果"
+        />
       </label>
       <div class="actions">
-        <button class="primary" :disabled="submitting" @click="submitTicket">
-          {{ submitting ? '提交中…' : '提交工单' }}
-        </button>
-        <span v-if="feedback" class="success">{{ feedback }}</span>
-        <span v-if="feedbackError" class="error">{{ feedbackError }}</span>
+        <el-button type="primary" :loading="submitting" @click="submitTicket">提交工单</el-button>
       </div>
-    </div>
+      <el-alert v-if="feedback" :closable="false" show-icon type="success" :title="feedback" />
+      <el-alert v-if="feedbackError" :closable="false" show-icon type="error" :title="feedbackError" />
+    </el-card>
 
-    <div class="card panel">
+    <el-card shadow="never" class="panel">
       <SectionHeader title="我的工单" subtitle="查看当前租户下的问题处理状态" />
       <div v-if="loading" class="state-card">正在读取工单…</div>
-      <div v-else-if="error" class="state-card state-card--error">{{ error }}</div>
-      <div v-else class="table">
-        <div class="head">
-          <span>单号</span>
-          <span>标题</span>
-          <span>分类</span>
-          <span>优先级</span>
-          <span>状态</span>
-          <span>更新时间</span>
-        </div>
-        <div v-for="ticket in tickets" :key="ticket.id" class="row">
-          <span class="strong">{{ ticket.ticketNo }}</span>
-          <span>{{ ticket.title }}</span>
-          <span>{{ ticket.category }}</span>
-          <span>{{ ticket.severity }}</span>
-          <span class="pill">{{ ticket.status }}</span>
-          <span class="muted">{{ ticket.updatedAt }}</span>
-        </div>
-      </div>
-    </div>
+      <el-alert v-else-if="error" :closable="false" show-icon type="error" :title="error" />
+      <el-table v-else :data="tickets ?? []" class="surface-table">
+        <el-table-column prop="ticketNo" label="单号" min-width="130" />
+        <el-table-column prop="title" label="标题" min-width="220" />
+        <el-table-column prop="category" label="分类" min-width="120" />
+        <el-table-column prop="severity" label="优先级" min-width="120" />
+        <el-table-column label="状态" min-width="120">
+          <template #default="{ row }">
+            <el-tag round disable-transitions>{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="updatedAt" label="更新时间" min-width="180" />
+      </el-table>
+    </el-card>
   </div>
 </template>
 
@@ -139,20 +136,6 @@ label span {
   font-size: 0.86rem;
 }
 
-input,
-select,
-textarea {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--stroke);
-  background: #fff;
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
 .actions {
   display: flex;
   align-items: center;
@@ -160,54 +143,8 @@ textarea {
   margin-top: 12px;
 }
 
-.primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background: linear-gradient(120deg, var(--brand), var(--brand-strong));
-  color: #fff;
-}
-
-.success {
-  color: #15803d;
-}
-
-.error {
-  color: #b91c1c;
-}
-
-.table {
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.head,
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr 0.8fr 0.8fr 0.8fr 1fr;
-  gap: 10px;
-  padding: 12px 14px;
-  align-items: center;
-}
-
-.head {
-  background: var(--panel-muted);
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.row {
-  border-top: 1px solid var(--stroke);
-}
-
 @media (max-width: 1024px) {
-  .form-grid,
-  .head,
-  .row {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 }

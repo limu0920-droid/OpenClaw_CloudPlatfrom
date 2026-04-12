@@ -1,0 +1,7 @@
+.git
+.gitignore
+server-runtime-test.log
+*.log
+.env
+.env.local
+tmp/

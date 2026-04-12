@@ -1,0 +1,92 @@
+name: platform-api-ci
+
+on:
+  push:
+    paths:
+      - "apps/platform-api/**"
+      - "deploy/k8s/platform-api/**"
+      - ".temp/dev-stack/**"
+      - ".github/workflows/platform-api-ci.yml"
+  pull_request:
+    paths:
+      - "apps/platform-api/**"
+      - "deploy/k8s/platform-api/**"
+      - ".temp/dev-stack/**"
+      - ".github/workflows/platform-api-ci.yml"
+
+jobs:
+  test-build-validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/platform-api/go.mod
+
+      - name: Run Go Tests
+        working-directory: apps/platform-api
+        run: go test ./...
+
+      - name: Run Migration Smoke
+        shell: pwsh
+        run: ./.temp/dev-stack/smoke-migrations.ps1
+
+      - name: Build Docker Image
+        working-directory: apps/platform-api
+        run: docker build --build-arg VERSION=ci --build-arg VCS_REF=${{ github.sha }} --build-arg BUILD_DATE=${{ github.run_id }} -t openclaw-dev/platform-api:ci .
+
+      - name: Run Containerized Persistence Smoke
+        shell: pwsh
+        run: ./.temp/dev-stack/smoke-persistence.ps1 -Build
+
+      - name: Render Kustomize Overlay
+        run: kubectl kustomize deploy/k8s/platform-api/overlays/dev > /tmp/platform-api-dev.yaml
+
+      - name: Render Bootstrap Overlay
+        run: kubectl kustomize deploy/k8s/platform-api/bootstrap/overlays/dev > /tmp/platform-api-bootstrap-dev.yaml
+
+      - name: Dry Run Kustomize Overlay
+        run: kubectl apply --dry-run=client -k deploy/k8s/platform-api/overlays/dev
+
+      - name: Dry Run Bootstrap Overlay
+        run: kubectl apply --dry-run=client -k deploy/k8s/platform-api/bootstrap/overlays/dev
+
+      - name: Prepare Strict Prod Preflight
+        shell: pwsh
+        run: >
+          .\deploy\k8s\platform-api\scripts\set-image.ps1 -Overlay prod -Image ghcr.io/openclaw/platform-api@sha256:deadbeef;
+          .\deploy\k8s\platform-api\scripts\set-config.ps1
+          -Overlay prod
+          -ApiHost "api.openclaw.example.net"
+          -TlsSecretName "platform-api-prod-tls"
+          -KeycloakBaseUrl "https://sso.openclaw.example.net"
+          -PortalLoginUrl "https://portal.openclaw.example.net/login"
+          -PortalPostLoginUrl "https://portal.openclaw.example.net/portal"
+          -PortalLogoutUrl "https://portal.openclaw.example.net/login"
+          -OpenSearchUrl "https://opensearch.openclaw.example.net"
+          -ObjectStorageEndpoint "https://minio.openclaw.example.net"
+          -SecretStoreKind "ClusterSecretStore"
+          -SecretStoreName "openclaw-vault-prod"
+          -SecretRefreshInterval "15m"
+          -SecretKeyPrefix "/openclaw/platform-api/prod"
+
+      - name: Strict Prod Preflight
+        shell: pwsh
+        run: |
+          .\deploy\k8s\platform-api\scripts\preflight.ps1 -Overlay prod -Strict
+          .\deploy\k8s\platform-api\scripts\preflight.ps1 -Overlay prod -Bootstrap -Strict
+
+      - name: Cleanup Dev Stack
+        if: always()
+        shell: pwsh
+        run: ./.temp/dev-stack/down.ps1 -RemoveVolumes
+
+
+

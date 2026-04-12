@@ -1,0 +1,3 @@
+./migrate.go
+./postgres.go
+./schema_ext.go

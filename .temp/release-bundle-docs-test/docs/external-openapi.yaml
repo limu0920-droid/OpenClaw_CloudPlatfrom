@@ -1,0 +1,702 @@
+openapi: 3.1.0
+info:
+  title: OpenClaw Platform API External Surface
+  version: 2026-04-09
+  description: External-facing APIs for auth, workspace, artifact preview, bridge callbacks, and WeChat Pay callbacks.
+servers:
+  - url: /
+tags:
+  - name: system
+  - name: auth
+  - name: workspace
+  - name: artifacts
+  - name: bridge
+  - name: payments
+paths:
+  /healthz:
+    get:
+      tags: [system]
+      summary: Liveness probe
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceStatus"
+  /readyz:
+    get:
+      tags: [system]
+      summary: Readiness probe
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceStatus"
+        "503":
+          description: Dependency checks failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceStatus"
+  /versionz:
+    get:
+      tags: [system]
+      summary: Build metadata
+      responses:
+        "200":
+          description: Version metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceStatus"
+  /api/v1/bootstrap:
+    get:
+      tags: [system]
+      summary: Bootstrap config for browser clients
+      responses:
+        "200":
+          description: Bootstrap metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/auth/providers:
+    get:
+      tags: [auth]
+      summary: Supported auth providers
+      responses:
+        "200":
+          description: Provider list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/auth/config:
+    get:
+      tags: [auth]
+      summary: Current auth config
+      responses:
+        "200":
+          description: Authentication configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/auth/session:
+    get:
+      tags: [auth]
+      summary: Current auth session envelope
+      responses:
+        "200":
+          description: Session or anonymous state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      summary: Raw auth session payload
+      responses:
+        "200":
+          description: Auth session state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSessionState"
+  /api/v1/auth/keycloak/url:
+    get:
+      tags: [auth]
+      summary: Build Keycloak login URL
+      parameters:
+        - $ref: "#/components/parameters/RedirectURI"
+        - $ref: "#/components/parameters/NextTarget"
+      responses:
+        "200":
+          description: Login URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginURLResponse"
+        "400":
+          $ref: "#/components/responses/PlainTextError"
+  /api/v1/auth/wechat/url:
+    get:
+      tags: [auth]
+      summary: Build WeChat QR login URL
+      parameters:
+        - $ref: "#/components/parameters/RedirectURI"
+        - $ref: "#/components/parameters/NextTarget"
+      responses:
+        "200":
+          description: Login URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginURLResponse"
+        "400":
+          $ref: "#/components/responses/PlainTextError"
+        "503":
+          $ref: "#/components/responses/PlainTextError"
+  /api/v1/auth/token:
+    post:
+      tags: [auth]
+      summary: Exchange auth code for signed session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                redirectUri:
+                  type: string
+      responses:
+        "200":
+          description: Signed session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSessionState"
+        "400":
+          $ref: "#/components/responses/PlainTextError"
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh signed session
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Refreshed session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSessionState"
+        "401":
+          $ref: "#/components/responses/PlainTextError"
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: Clear signed session
+      responses:
+        "200":
+          description: Logout result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/{scope}/instances/{instanceId}/workspace/sessions:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/InstanceId"
+    get:
+      tags: [workspace]
+      summary: List workspace sessions for an instance
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Session list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+    post:
+      tags: [workspace]
+      summary: Create a workspace session
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspaceSessionRequest"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+        "400":
+          $ref: "#/components/responses/PlainTextError"
+  /api/v1/{scope}/instances/{instanceId}/workspace/bridge-health:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/InstanceId"
+    get:
+      tags: [bridge]
+      summary: Probe bridge health for the instance
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Bridge health result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+        "503":
+          description: Bridge probe failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/{scope}/workspace/sessions:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+    get:
+      tags: [workspace]
+      summary: List workspace sessions in the current scope
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Session list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/{scope}/workspace/sessions/{sessionId}:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [workspace]
+      summary: Fetch session detail, messages, artifacts, and event history
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Session detail payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/{scope}/workspace/sessions/{sessionId}/messages:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [workspace]
+      summary: List messages for a workspace session
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Message list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+    post:
+      tags: [workspace]
+      summary: Append a message and optionally dispatch it to the bridge
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspaceMessageRequest"
+      responses:
+        "201":
+          description: Message create and dispatch outcome
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/{scope}/workspace/sessions/{sessionId}/messages/stream:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      tags: [workspace]
+      summary: Create a message and stream normalized reply events
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspaceMessageRequest"
+      responses:
+        "200":
+          description: Server-sent event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: |-
+                event: message
+                data: {"message":{"id":101,"status":"streaming"}}
+
+                event: chunk
+                data: {"delta":"第一部分先讲市场背景。"}
+
+                event: done
+                data: {}
+  /api/v1/{scope}/workspace/sessions/{sessionId}/events:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [workspace]
+      summary: Subscribe to workspace event replay and live events
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Server-sent event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+  /api/v1/{scope}/workspace/sessions/{sessionId}/artifacts:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/SessionId"
+    post:
+      tags: [artifacts]
+      summary: Register and archive a workspace artifact
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspaceArtifactRequest"
+      responses:
+        "201":
+          description: Artifact created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/{scope}/workspace/artifacts/{artifactId}/preview:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/ArtifactId"
+    get:
+      tags: [artifacts]
+      summary: Describe artifact preview strategy
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Artifact and preview descriptor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+  /api/v1/{scope}/workspace/artifacts/{artifactId}/preview-content:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/ArtifactId"
+    get:
+      tags: [artifacts]
+      summary: Stream proxied preview content
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Preview payload
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/v1/{scope}/workspace/artifacts/{artifactId}/download:
+    parameters:
+      - $ref: "#/components/parameters/Scope"
+      - $ref: "#/components/parameters/ArtifactId"
+    get:
+      tags: [artifacts]
+      summary: Download proxied or archived artifact content
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Download payload
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/v1/platform/workspace/report:
+    post:
+      tags: [bridge]
+      summary: Accept asynchronous Lobster bridge callbacks
+      security:
+        - bridgeToken: []
+      parameters:
+        - $ref: "#/components/parameters/ProtocolVersionHeader"
+        - $ref: "#/components/parameters/RequestIdHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BridgeReportRequest"
+      responses:
+        "202":
+          description: Callback accepted and persisted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+        "400":
+          $ref: "#/components/responses/PlainTextError"
+        "401":
+          $ref: "#/components/responses/PlainTextError"
+  /api/v1/callback/payment/wechatpay:
+    post:
+      tags: [payments]
+      summary: Accept WeChat Pay transaction and refund callbacks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WechatPayCallbackRequest"
+      responses:
+        "200":
+          description: Callback processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+        "202":
+          description: Accepted in noop mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LooseObject"
+        "400":
+          $ref: "#/components/responses/PlainTextError"
+        "401":
+          $ref: "#/components/responses/PlainTextError"
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: openclaw_auth
+    bridgeToken:
+      type: apiKey
+      in: header
+      name: X-Platform-Bridge-Token
+  responses:
+    PlainTextError:
+      description: Plain-text error body
+      content:
+        text/plain:
+          schema:
+            type: string
+  parameters:
+    Scope:
+      name: scope
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [portal, admin]
+    InstanceId:
+      name: instanceId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    ArtifactId:
+      name: artifactId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    RedirectURI:
+      name: redirect_uri
+      in: query
+      required: false
+      schema:
+        type: string
+    NextTarget:
+      name: next
+      in: query
+      required: false
+      schema:
+        type: string
+    ProtocolVersionHeader:
+      name: X-OpenClaw-Protocol-Version
+      in: header
+      required: false
+      schema:
+        type: string
+        default: openclaw-lobster-bridge/v2
+    RequestIdHeader:
+      name: X-OpenClaw-Request-Id
+      in: header
+      required: false
+      schema:
+        type: string
+  schemas:
+    LooseObject:
+      type: object
+      additionalProperties: true
+    ServiceStatus:
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+        name:
+          type: string
+        service:
+          type: string
+        version:
+          type: string
+        commit:
+          type: string
+        mode:
+          type: string
+        stateBackend:
+          type: string
+        runtimeProvider:
+          type: string
+        bootstrapStrategy:
+          type: string
+    AuthSessionState:
+      type: object
+      additionalProperties: true
+      properties:
+        authenticated:
+          type: boolean
+        provider:
+          type: string
+        userId:
+          type: integer
+        tenantId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        openId:
+          type: string
+        unionId:
+          type: string
+    LoginURLResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        url:
+          type: string
+        provider:
+          type: string
+        mode:
+          type: string
+        state:
+          type: string
+    CreateWorkspaceSessionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        workspaceUrl:
+          type: string
+      additionalProperties: false
+    CreateWorkspaceMessageRequest:
+      type: object
+      properties:
+        role:
+          type: string
+        status:
+          type: string
+        content:
+          type: string
+        dispatch:
+          type: boolean
+      required: [content]
+      additionalProperties: false
+    CreateWorkspaceArtifactRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        kind:
+          type: string
+        sourceUrl:
+          type: string
+        previewUrl:
+          type: string
+        messageId:
+          type: integer
+      required: [title]
+      additionalProperties: false
+    BridgeReportRequest:
+      type: object
+      properties:
+        protocolVersion:
+          type: string
+        requestId:
+          type: string
+        sessionNo:
+          type: string
+        traceId:
+          type: string
+        syncedAt:
+          type: string
+        messages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        artifacts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        error:
+          type: object
+          additionalProperties: true
+      required: [sessionNo]
+      additionalProperties: false
+    WechatPayCallbackRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        out_trade_no:
+          type: string
+        transaction_id:
+          type: string
+        trade_state:
+          type: string
+        out_refund_no:
+          type: string
+        refund_id:
+          type: string
+        refund_status:
+          type: string
+        resource:
+          type: object
+          additionalProperties: true

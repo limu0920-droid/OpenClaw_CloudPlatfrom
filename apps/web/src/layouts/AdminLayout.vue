@@ -1,58 +1,75 @@
-<script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+﻿<script setup lang="ts">
 import { computed } from 'vue'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 
-const nav = [
-  { label: '总览', to: '/admin' },
-  { label: '租户', to: '/admin/tenants' },
-  { label: '实例', to: '/admin/instances' },
-  { label: '渠道', to: '/admin/channels' },
-  { label: '工单', to: '/admin/tickets' },
-  { label: '任务', to: '/admin/jobs' },
-  { label: '告警', to: '/admin/alerts' },
-  { label: '审计', to: '/admin/audit' },
-]
+import { useBranding } from '../lib/brand'
+
+const baseNav = [
+  { label: '总览', to: '/admin', feature: 'adminEnabled' },
+  { label: '租户', to: '/admin/tenants', feature: 'adminEnabled' },
+  { label: '实例', to: '/admin/instances', feature: 'adminEnabled' },
+  { label: '产物', to: '/admin/artifacts', feature: 'adminEnabled' },
+  { label: '渠道', to: '/admin/channels', feature: 'channelsEnabled' },
+  { label: '工单', to: '/admin/tickets', feature: 'ticketsEnabled' },
+  { label: '任务', to: '/admin/jobs', feature: 'adminEnabled' },
+  { label: 'OEM', to: '/admin/oem/brands', feature: 'adminEnabled' },
+  { label: '审批', to: '/admin/approvals', feature: 'adminEnabled' },
+  { label: '诊断', to: '/admin/diagnostics', feature: 'adminEnabled' },
+  { label: '告警', to: '/admin/alerts', feature: 'adminEnabled' },
+  { label: '审计', to: '/admin/audit', feature: 'auditEnabled' },
+] as const
 
 const route = useRoute()
-const active = computed(() => route.path)
+const router = useRouter()
+const { brand, features } = useBranding()
+const nav = computed(() =>
+  baseNav.filter((item) => {
+    const key = item.feature
+    return key ? Boolean(features.value[key]) : true
+  }),
+)
+const currentMenu = computed(
+  () => nav.value.find((item) => (item.to === '/admin' ? route.path === item.to : route.path.startsWith(item.to)))?.to ?? '/admin',
+)
 </script>
 
 <template>
   <div class="admin-shell">
-    <aside class="admin-nav card">
+    <el-card shadow="never" class="admin-nav">
       <div class="brand">
-        <div class="brand-mark">OC</div>
+        <div class="brand-mark">
+          <img v-if="brand.logoUrl" :src="brand.logoUrl" :alt="brand.name" class="brand-logo" />
+          <span v-else>{{ brand.name.slice(0, 2).toUpperCase() }}</span>
+        </div>
         <div>
-          <div class="brand-title">OpenClaw</div>
+          <div class="brand-title">{{ brand.name }}</div>
           <div class="brand-sub">Admin Control</div>
         </div>
       </div>
-      <nav>
-        <RouterLink
-          v-for="item in nav"
-          :key="item.to"
-          :to="item.to"
-          :class="['nav-item', active.startsWith(item.to) ? 'active' : '']"
-        >
-          {{ item.label }}
-        </RouterLink>
-      </nav>
+      <el-scrollbar class="nav-scroll">
+        <el-menu :default-active="currentMenu" :router="true" class="admin-menu">
+          <el-menu-item v-for="item in nav" :key="item.to" :index="item.to">
+            {{ item.label }}
+          </el-menu-item>
+        </el-menu>
+      </el-scrollbar>
       <div class="nav-footer">
-        <div class="pill">运行中：8 副本</div>
-        <div class="muted">平台管理员</div>
+        <el-tag round effect="dark" disable-transitions>运行中：8 副本</el-tag>
+        <div class="muted">{{ brand.supportEmail || '平台管理员' }}</div>
       </div>
-    </aside>
+    </el-card>
     <main class="admin-main">
-      <header class="admin-top card">
+      <el-card shadow="never" class="admin-top">
         <div>
-          <div class="muted">平台控制面</div>
+          <div class="muted">{{ brand.name }} 控制面</div>
           <div class="page-title">运维与审计</div>
         </div>
         <div class="top-actions">
-          <RouterLink class="ghost" to="/admin/alerts">告警中心</RouterLink>
-          <RouterLink class="primary" to="/admin/jobs">发布维护窗口</RouterLink>
+          <el-button round plain @click="router.push('/admin/approvals')">审批中心</el-button>
+          <el-button round plain @click="router.push('/admin/diagnostics')">诊断中心</el-button>
+          <el-button round type="primary" @click="router.push('/admin/alerts')">告警中心</el-button>
         </div>
-      </header>
+      </el-card>
       <section class="admin-content">
         <RouterView />
       </section>
@@ -72,11 +89,10 @@ const active = computed(() => route.path)
 .admin-nav {
   position: sticky;
   top: 18px;
-  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: var(--panel);
+  min-height: calc(100vh - 36px);
 }
 
 .brand {
@@ -98,6 +114,12 @@ const active = computed(() => route.path)
   font-weight: 700;
 }
 
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
 .brand-title {
   font-weight: 700;
 }
@@ -107,28 +129,31 @@ const active = computed(() => route.path)
   font-size: 12px;
 }
 
-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.nav-scroll {
+  flex: 1;
 }
 
-.nav-item {
-  padding: 10px 12px;
-  border-radius: 12px;
+.admin-menu {
+  border-right: none;
+  background: transparent;
+}
+
+:deep(.admin-menu .el-menu-item) {
+  height: 46px;
+  margin-bottom: 6px;
+  border-radius: 14px;
   color: var(--text);
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
-.nav-item:hover {
+:deep(.admin-menu .el-menu-item:hover) {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.nav-item.active {
-  border-color: var(--brand);
+:deep(.admin-menu .el-menu-item.is-active) {
   background: rgba(59, 130, 246, 0.12);
   color: #e5edff;
+  font-variation-settings: "wght" 620;
 }
 
 .nav-footer {
@@ -146,7 +171,6 @@ nav {
 }
 
 .admin-top {
-  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -164,26 +188,6 @@ nav {
   gap: 10px;
 }
 
-.ghost,
-.primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--stroke);
-  background: var(--panel-muted);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.primary {
-  border-color: transparent;
-  background: linear-gradient(120deg, #1e40af, var(--brand));
-  color: #e5edff;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-}
-
 .admin-content {
   display: flex;
   flex-direction: column;
@@ -196,13 +200,8 @@ nav {
   }
   .admin-nav {
     position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+    min-height: auto;
   }
 }
 </style>
+

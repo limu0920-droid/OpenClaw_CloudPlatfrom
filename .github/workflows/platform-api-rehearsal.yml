@@ -1,0 +1,55 @@
+name: platform-api-rehearsal
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/platform-api/**"
+      - "deploy/k8s/platform-api/**"
+      - ".github/workflows/platform-api-rehearsal.yml"
+
+jobs:
+  render-strict-prod:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fake Production Config
+        shell: pwsh
+        run: >
+          .\deploy\k8s\platform-api\scripts\set-image.ps1 -Overlay prod -Image ghcr.io/openclaw/platform-api@sha256:deadbeef;
+          .\deploy\k8s\platform-api\scripts\set-config.ps1
+          -Overlay prod
+          -ApiHost "api.openclaw.example.net"
+          -TlsSecretName "platform-api-prod-tls"
+          -KeycloakBaseUrl "https://sso.openclaw.example.net"
+          -PortalLoginUrl "https://portal.openclaw.example.net/login"
+          -PortalPostLoginUrl "https://portal.openclaw.example.net/portal"
+          -PortalLogoutUrl "https://portal.openclaw.example.net/login"
+          -OpenSearchUrl "https://opensearch.openclaw.example.net"
+          -ObjectStorageEndpoint "https://minio.openclaw.example.net"
+          -SecretStoreKind "ClusterSecretStore"
+          -SecretStoreName "openclaw-vault-prod"
+          -SecretRefreshInterval "15m"
+          -SecretKeyPrefix "/openclaw/platform-api/prod"
+
+      - name: Strict Preflight
+        shell: pwsh
+        run: |
+          .\deploy\k8s\platform-api\scripts\preflight.ps1 -Overlay prod -Strict
+          .\deploy\k8s\platform-api\scripts\preflight.ps1 -Overlay prod -Bootstrap -Strict
+
+      - name: Build Rehearsal Bundle
+        shell: pwsh
+        run: .\deploy\k8s\platform-api\scripts\package-release.ps1 -Overlay prod -BootstrapOverlay prod -OutputDir .\release-bundle
+
+      - name: Upload Rehearsal Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-api-rehearsal-bundle
+          path: .\release-bundle
+
+
+

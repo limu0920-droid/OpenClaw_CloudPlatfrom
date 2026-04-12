@@ -13,3 +13,16 @@ apps/web/node_modules/
 apps/web/dist/
 
 *.log
+
+.temp/dev-stack/.env
+.temp/dev-stack/data/
+.temp/dev-stack/.state/
+.temp/release-bundle-verify/
+.temp/verify-prod-config/
+.temp/*.zip
+
+apps/platform-api/*.out
+apps/platform-api/*.err
+apps/platform-api/*-test.log
+
+release-bundle/

@@ -1,0 +1,15 @@
+﻿apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openclaw-platform-api-bootstrap
+spec:
+  template:
+    spec:
+      containers:
+        - name: bootstrap
+          image: ghcr.io/openclaw/platform-api:latest
+          imagePullPolicy: IfNotPresent
+
+
+
+

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-platform-api-dashboard
+  namespace: openclaw-system
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: openclaw-platform-api
+data:
+  openclaw-platform-api-dashboard.json: |
+    {
+      "title": "OpenClaw Platform API",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Request Rate",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [{ "expr": "sum(rate(openclaw_http_requests_total[5m])) by (route)", "legendFormat": "{{route}}" }]
+        },
+        {
+          "type": "timeseries",
+          "title": "P95 Latency",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(openclaw_http_request_duration_seconds_bucket[5m])) by (le, route))", "legendFormat": "{{route}}" }]
+        }
+      ]
+    }
+

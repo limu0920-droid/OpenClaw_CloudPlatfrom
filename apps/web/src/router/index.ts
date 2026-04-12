@@ -1,60 +1,91 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import PortalLayout from '../layouts/PortalLayout.vue'
-import AdminLayout from '../layouts/AdminLayout.vue'
-import LoginPage from '../features/auth/LoginPage.vue'
-import PortalOverview from '../features/portal/OverviewPage.vue'
-import PortalInstances from '../features/portal/InstancesPage.vue'
-import PortalInstanceDetail from '../features/portal/InstanceDetailPage.vue'
-import PortalJobs from '../features/portal/JobsPage.vue'
-import PortalLogs from '../features/portal/LogsPage.vue'
-import PortalTickets from '../features/portal/TicketsPage.vue'
-import AdminOverview from '../features/admin/OverviewPage.vue'
-import AdminTenants from '../features/admin/TenantsPage.vue'
-import AdminInstances from '../features/admin/InstancesPage.vue'
-import AdminInstanceDetail from '../features/admin/InstanceDetailPage.vue'
-import AdminJobs from '../features/admin/JobsPage.vue'
-import AdminAlerts from '../features/admin/AlertsPage.vue'
-import AdminAudit from '../features/admin/AuditPage.vue'
-import AdminTickets from '../features/admin/TicketsPage.vue'
-import PortalChannels from '../features/portal/ChannelsPage.vue'
-import PortalChannelDetail from '../features/portal/ChannelDetailPage.vue'
-import AdminChannels from '../features/admin/ChannelsPage.vue'
-import AdminChannelDetail from '../features/admin/ChannelDetailPage.vue'
 
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/login' },
-  { path: '/login', name: 'login', component: LoginPage, meta: { theme: 'portal' } },
+  {
+    path: '/',
+    name: 'marketing-home',
+    component: () => import('../features/marketing/HomePage.vue'),
+    meta: { theme: 'marketing' },
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('../features/auth/LoginPage.vue'),
+    meta: { theme: 'portal' },
+  },
   {
     path: '/portal',
-    component: PortalLayout,
+    component: () => import('../layouts/PortalLayout.vue'),
     meta: { theme: 'portal' },
     children: [
-      { path: '', name: 'portal-overview', component: PortalOverview },
-      { path: 'instances', name: 'portal-instances', component: PortalInstances },
-      { path: 'instances/:id', name: 'portal-instance-detail', component: PortalInstanceDetail },
-      { path: 'channels', name: 'portal-channels', component: PortalChannels },
-      { path: 'channels/:id', name: 'portal-channel-detail', component: PortalChannelDetail },
-      { path: 'jobs', name: 'portal-jobs', component: PortalJobs },
-      { path: 'tickets', name: 'portal-tickets', component: PortalTickets },
-      { path: 'logs', name: 'portal-logs', component: PortalLogs },
+      { path: '', name: 'portal-overview', component: () => import('../features/portal/OverviewPage.vue') },
+      { path: 'instances', name: 'portal-instances', component: () => import('../features/portal/InstancesPage.vue') },
+      {
+        path: 'instances/:id',
+        name: 'portal-instance-detail',
+        component: () => import('../features/portal/InstanceDetailPage.vue'),
+      },
+      {
+        path: 'instances/:id/workspace',
+        name: 'portal-instance-workspace',
+        component: () => import('../features/workspace/InstanceWorkspacePage.vue'),
+      },
+      { path: 'operations', name: 'portal-operations', component: () => import('../features/portal/OperationsPage.vue') },
+      { path: 'artifacts', name: 'portal-artifacts', component: () => import('../features/artifacts/ArtifactsPage.vue') },
+      {
+        path: 'artifacts/:id',
+        name: 'portal-artifact-detail',
+        component: () => import('../features/artifacts/ArtifactDetailPage.vue'),
+      },
+      { path: 'channels', name: 'portal-channels', component: () => import('../features/portal/ChannelsPage.vue') },
+      {
+        path: 'channels/:id',
+        name: 'portal-channel-detail',
+        component: () => import('../features/portal/ChannelDetailPage.vue'),
+      },
+      { path: 'jobs', name: 'portal-jobs', component: () => import('../features/portal/JobsPage.vue') },
+      { path: 'tickets', name: 'portal-tickets', component: () => import('../features/portal/TicketsPage.vue') },
+      { path: 'logs', name: 'portal-logs', component: () => import('../features/portal/LogsPage.vue') },
     ],
   },
   {
     path: '/admin',
-    component: AdminLayout,
+    component: () => import('../layouts/AdminLayout.vue'),
     meta: { theme: 'admin' },
     children: [
-      { path: '', name: 'admin-overview', component: AdminOverview },
-      { path: 'tenants', name: 'admin-tenants', component: AdminTenants },
-      { path: 'instances', name: 'admin-instances', component: AdminInstances },
-      { path: 'instances/:id', name: 'admin-instance-detail', component: AdminInstanceDetail },
-      { path: 'channels', name: 'admin-channels', component: AdminChannels },
-      { path: 'channels/:id', name: 'admin-channel-detail', component: AdminChannelDetail },
-      { path: 'jobs', name: 'admin-jobs', component: AdminJobs },
-      { path: 'tickets', name: 'admin-tickets', component: AdminTickets },
-      { path: 'alerts', name: 'admin-alerts', component: AdminAlerts },
-      { path: 'audit', name: 'admin-audit', component: AdminAudit },
+      { path: '', name: 'admin-overview', component: () => import('../features/admin/OverviewPage.vue') },
+      { path: 'tenants', name: 'admin-tenants', component: () => import('../features/admin/TenantsPage.vue') },
+      { path: 'instances', name: 'admin-instances', component: () => import('../features/admin/InstancesPage.vue') },
+      {
+        path: 'instances/:id',
+        name: 'admin-instance-detail',
+        component: () => import('../features/admin/InstanceDetailPage.vue'),
+      },
+      {
+        path: 'instances/:id/workspace',
+        name: 'admin-instance-workspace',
+        component: () => import('../features/workspace/InstanceWorkspacePage.vue'),
+      },
+      { path: 'artifacts', name: 'admin-artifacts', component: () => import('../features/artifacts/ArtifactsPage.vue') },
+      {
+        path: 'artifacts/:id',
+        name: 'admin-artifact-detail',
+        component: () => import('../features/artifacts/ArtifactDetailPage.vue'),
+      },
+      { path: 'channels', name: 'admin-channels', component: () => import('../features/admin/ChannelsPage.vue') },
+      {
+        path: 'channels/:id',
+        name: 'admin-channel-detail',
+        component: () => import('../features/admin/ChannelDetailPage.vue'),
+      },
+      { path: 'jobs', name: 'admin-jobs', component: () => import('../features/admin/JobsPage.vue') },
+      { path: 'tickets', name: 'admin-tickets', component: () => import('../features/admin/TicketsPage.vue') },
+      { path: 'oem/brands', name: 'admin-oem-brands', component: () => import('../features/admin/OEMBrandsPage.vue') },
+      { path: 'approvals', name: 'admin-approvals', component: () => import('../features/admin/ApprovalsPage.vue') },
+      { path: 'diagnostics', name: 'admin-diagnostics', component: () => import('../features/admin/DiagnosticsPage.vue') },
+      { path: 'alerts', name: 'admin-alerts', component: () => import('../features/admin/AlertsPage.vue') },
+      { path: 'audit', name: 'admin-audit', component: () => import('../features/admin/AuditPage.vue') },
     ],
   },
 ]

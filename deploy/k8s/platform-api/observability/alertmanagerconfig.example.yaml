@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: openclaw-platform-api
+  namespace: openclaw-system
+  labels:
+    app.kubernetes.io/name: openclaw-platform-api
+spec:
+  route:
+    receiver: ops-default
+    groupBy:
+      - alertname
+      - namespace
+  receivers:
+    - name: ops-default
+      webhookConfigs:
+        - url: https://alerts.example.com/openclaw/platform-api
+

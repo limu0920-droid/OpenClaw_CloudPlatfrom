@@ -1,0 +1,95 @@
+name: platform-api-release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "platform-api-v*"
+
+jobs:
+  build-push-render:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/platform-api
+          file: ./apps/platform-api/Dockerfile
+          push: true
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ github.run_id }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/platform-api:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/platform-api:stable
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign Image Digest
+        run: cosign sign --yes "ghcr.io/${{ github.repository_owner }}/platform-api@${{ steps.build.outputs.digest }}"
+
+      - name: Set Immutable Image In Prod Overlay
+        shell: pwsh
+        run: .\deploy\k8s\platform-api\scripts\set-image.ps1 -Overlay prod -Image "ghcr.io/${{ github.repository_owner }}/platform-api@${{ steps.build.outputs.digest }}"
+
+      - name: Apply Production Configuration
+        shell: pwsh
+        run: >
+          .\deploy\k8s\platform-api\scripts\set-config.ps1
+          -Overlay prod
+          -ApiHost "${{ vars.PLATFORM_API_API_HOST }}"
+          -TlsSecretName "${{ vars.PLATFORM_API_TLS_SECRET_NAME }}"
+          -KeycloakBaseUrl "${{ vars.PLATFORM_API_KEYCLOAK_BASE_URL }}"
+          -PortalLoginUrl "${{ vars.PLATFORM_API_PORTAL_LOGIN_URL }}"
+          -PortalPostLoginUrl "${{ vars.PLATFORM_API_PORTAL_POST_LOGIN_URL }}"
+          -PortalLogoutUrl "${{ vars.PLATFORM_API_PORTAL_LOGOUT_URL }}"
+          -OpenSearchUrl "${{ vars.PLATFORM_API_OPENSEARCH_URL }}"
+          -ObjectStorageEndpoint "${{ vars.PLATFORM_API_OBJECT_STORAGE_ENDPOINT }}"
+          -SecretStoreKind "${{ vars.PLATFORM_API_SECRET_STORE_KIND }}"
+          -SecretStoreName "${{ vars.PLATFORM_API_SECRET_STORE_NAME }}"
+          -SecretRefreshInterval "${{ vars.PLATFORM_API_SECRET_REFRESH_INTERVAL }}"
+          -SecretKeyPrefix "${{ vars.PLATFORM_API_SECRET_KEY_PREFIX }}"
+
+      - name: Preflight Prod Overlay
+        shell: pwsh
+        run: |
+          .\deploy\k8s\platform-api\scripts\preflight.ps1 -Overlay prod -Strict
+          .\deploy\k8s\platform-api\scripts\preflight.ps1 -Overlay prod -Bootstrap -Strict
+
+      - name: Build Release Bundle
+        shell: pwsh
+        run: .\deploy\k8s\platform-api\scripts\package-release.ps1 -Overlay prod -BootstrapOverlay prod -OutputDir .\release-bundle
+
+      - name: Upload Release Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-api-release-bundle
+          path: .\release-bundle
+
+
+

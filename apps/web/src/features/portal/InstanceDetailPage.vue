@@ -1,11 +1,15 @@
 <script setup lang="ts">
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
 import { reactive, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+
 import SectionHeader from '../../components/SectionHeader.vue'
+import { formatAccessEntryType } from '../../lib/access'
 import { api } from '../../lib/api'
-import type { InstanceOperationsData, PlanOffer, PortalInstanceDetail, TriggerBackupPayload, UpdateConfigPayload } from '../../lib/types'
+import type { InstanceOperationsData, PlanOffer, PortalInstanceDetail, TriggerBackupPayload } from '../../lib/types'
 
 const route = useRoute()
+const router = useRouter()
 
 const detail = ref<PortalInstanceDetail | null>(null)
 const loading = ref(true)
@@ -34,6 +38,13 @@ const backupForm = reactive<TriggerBackupPayload>({
   type: 'manual',
   operator: 'portal-user',
 })
+
+const detailTabs = [
+  { key: 'overview', label: '概览', subtitle: '入口 / 资源 / 运行动作' },
+  { key: 'plans', label: '套餐任务', subtitle: '购买 / 续费 / 最近任务' },
+  { key: 'config', label: '配置发布', subtitle: '模型 / 域名 / 策略' },
+  { key: 'backup', label: '备份', subtitle: '触发备份 / 历史记录' },
+]
 
 async function load(id: string) {
   loading.value = true
@@ -73,7 +84,7 @@ async function powerAction(action: 'start' | 'stop' | 'restart') {
 
 async function purchasePlan(planCode: string, action: 'buy' | 'renew' | 'upgrade' = 'buy') {
   if (!detail.value) return
-  purchaseSubmitting.value = planCode
+  purchaseSubmitting.value = `${planCode}-${action}`
   feedback.purchase = ''
   feedback.error = ''
   try {
@@ -97,18 +108,24 @@ async function submitConfig() {
   feedback.config = ''
   feedback.error = ''
   try {
-    await api.updateInstanceConfig(String(detail.value.instance.id), {
-      updatedBy: 'portal-user',
-      settings: {
+    const response = await api.createApprovalRequest('portal', {
+      approvalType: 'config_publish',
+      targetType: 'instance',
+      targetId: Number(detail.value.instance.id),
+      instanceId: Number(detail.value.instance.id),
+      riskLevel: 'high',
+      reason: '申请发布实例配置变更。',
+      comment: '由租户侧提交，待平台审批后执行。',
+      metadata: {
+        updatedBy: 'portal-user',
         model: configForm.model || 'gpt-4o',
         allowedOrigins: configForm.allowedOrigins || '',
         backupPolicy: configForm.backupPolicy || 'daily',
       },
-    } as UpdateConfigPayload)
-    feedback.config = '配置发布已提交'
-    await load(String(detail.value.instance.id))
+    })
+    feedback.config = `配置审批单已提交：${response.approval.approvalNo}`
   } catch (err) {
-    feedback.error = err instanceof Error ? err.message : '发布配置失败'
+    feedback.error = err instanceof Error ? err.message : '提交配置审批失败'
   } finally {
     configSubmitting.value = false
   }
@@ -140,191 +157,204 @@ watch(
 </script>
 
 <template>
-  <div v-if="loading" class="card state-card">正在加载实例详情…</div>
-  <div v-else-if="error" class="card state-card state-card--error">{{ error }}</div>
+  <el-card v-if="loading" shadow="never" class="state-card">正在加载实例详情…</el-card>
+  <el-alert v-else-if="error" :closable="false" show-icon type="error" :title="error" />
   <div v-else-if="detail" class="stack">
-    <div class="card head">
-      <div>
-        <div class="muted">实例</div>
-        <div class="title">{{ detail.instance.name }}</div>
-        <div class="muted">
-          版本 {{ detail.instance.version }} · 计划 {{ detail.instance.plan }} · 区域 {{ detail.instance.region }}
+    <el-card shadow="never" class="summary-card">
+      <div class="summary-head">
+        <div>
+          <div class="muted">实例</div>
+          <div class="title">{{ detail.instance.name }}</div>
+          <div class="muted">
+            版本 {{ detail.instance.version }} · 计划 {{ detail.instance.plan }} · 区域 {{ detail.instance.region }}
+          </div>
         </div>
+        <el-tag round size="large" disable-transitions>{{ detail.instance.status }}</el-tag>
       </div>
-      <div class="pill">{{ detail.instance.status }}</div>
-    </div>
+      <div class="summary-chips">
+        <span class="summary-chip">实例编码 {{ detail.instance.code }}</span>
+        <span class="summary-chip">套餐 {{ detail.instance.plan }}</span>
+        <span class="summary-chip">区域 {{ detail.instance.region }}</span>
+        <span class="summary-chip">最近更新 {{ detail.instance.updatedAt }}</span>
+      </div>
+    </el-card>
 
-    <div class="two-col">
-      <div class="card">
-        <SectionHeader title="访问入口" subtitle="来自实例访问配置" />
-        <ul class="access">
-          <li v-for="acc in detail.instance.access" :key="acc.url">
-            <div class="strong">{{ acc.entryType }}</div>
-            <div class="muted">{{ acc.url }}</div>
-            <div v-if="acc.isPrimary" class="pill">主入口</div>
-          </li>
-        </ul>
-      </div>
-      <div class="card">
-        <SectionHeader title="资源与密码" subtitle="用户侧直接查看 CPU / 内存 / API 调用量 / 管理口令摘要" />
-        <div v-if="operations?.runtime" class="runtime-grid">
-          <div class="runtime-item">
-            <span class="muted">电源状态</span>
-            <strong>{{ operations.runtime.powerState }}</strong>
-          </div>
-          <div class="runtime-item">
-            <span class="muted">CPU</span>
-            <strong>{{ operations.runtime.cpuUsagePercent }}%</strong>
-          </div>
-          <div class="runtime-item">
-            <span class="muted">内存</span>
-            <strong>{{ operations.runtime.memoryUsagePercent }}%</strong>
-          </div>
-          <div class="runtime-item">
-            <span class="muted">磁盘</span>
-            <strong>{{ operations.runtime.diskUsagePercent }}%</strong>
-          </div>
-          <div class="runtime-item">
-            <span class="muted">24h API 请求</span>
-            <strong>{{ operations.runtime.apiRequests24h }}</strong>
-          </div>
-          <div class="runtime-item">
-            <span class="muted">24h Token</span>
-            <strong>{{ operations.runtime.apiTokens24h }}</strong>
-          </div>
-        </div>
-        <div v-if="operations?.credentials" class="credential-box">
-          <span class="muted">管理员账号</span>
-          <strong>{{ operations.credentials.adminUser }}</strong>
-          <span class="muted">密码摘要 {{ operations.credentials.passwordMasked }} · 最近轮换 {{ operations.credentials.lastRotatedAt }}</span>
-        </div>
-        <div class="ops-actions">
-          <button class="primary" :disabled="powerSubmitting === 'start'" @click="powerAction('start')">
-            {{ powerSubmitting === 'start' ? '启动中…' : '开启' }}
+    <TabGroup class="detail-tabs">
+      <TabList class="detail-tab-list">
+        <Tab v-for="item in detailTabs" :key="item.key" as="template" v-slot="{ selected }">
+          <button :class="['detail-tab', selected ? 'selected' : '']" type="button">
+            <span>{{ item.subtitle }}</span>
+            <strong>{{ item.label }}</strong>
           </button>
-          <button class="ghost" :disabled="powerSubmitting === 'stop'" @click="powerAction('stop')">
-            {{ powerSubmitting === 'stop' ? '停止中…' : '关闭' }}
-          </button>
-          <button class="ghost" :disabled="powerSubmitting === 'restart'" @click="powerAction('restart')">
-            {{ powerSubmitting === 'restart' ? '重启中…' : '重启' }}
-          </button>
-          <RouterLink class="ghost" to="/portal/tickets">问题上报</RouterLink>
-        </div>
-        <div class="form-feedback">
-          <span v-if="feedback.error" class="error">{{ feedback.error }}</span>
-          <span v-else-if="feedback.ops" class="success">{{ feedback.ops }}</span>
-        </div>
-      </div>
-    </div>
+        </Tab>
+      </TabList>
 
-    <div class="card plans-card">
-      <SectionHeader title="套餐与购买" subtitle="查看可购套餐，并为当前实例执行购买 / 续费 / 升级" />
-      <div class="plans-grid">
-        <article v-for="plan in plans" :key="plan.id" class="plan-card">
-          <p class="eyebrow">{{ plan.highlight }}</p>
-          <strong>{{ plan.name }}</strong>
-          <p class="muted">¥{{ plan.monthlyPrice }} / 月 · {{ plan.cpu }} vCPU / {{ plan.memory }} / {{ plan.storage }}</p>
-          <ul class="feature-list">
-            <li v-for="feature in plan.features" :key="feature">{{ feature }}</li>
-          </ul>
-          <div class="plan-actions">
-            <button class="primary" :disabled="purchaseSubmitting === plan.code" @click="purchasePlan(plan.code, 'buy')">
-              {{ purchaseSubmitting === plan.code ? '处理中…' : '购买' }}
-            </button>
-            <button class="ghost" :disabled="purchaseSubmitting === `${plan.code}-renew`" @click="purchasePlan(plan.code, 'renew')">续费</button>
-          </div>
-        </article>
-      </div>
-      <div class="form-feedback">
-        <span v-if="feedback.error" class="error">{{ feedback.error }}</span>
-        <span v-else-if="feedback.purchase" class="success">{{ feedback.purchase }}</span>
-      </div>
-    </div>
+      <TabPanels class="detail-tab-panels">
+        <TabPanel class="detail-tab-panel">
+          <div class="two-col">
+            <el-card shadow="never">
+              <SectionHeader title="访问入口" subtitle="来自实例访问配置" />
+              <ul class="access">
+                <li v-for="acc in detail.instance.access" :key="acc.url">
+                  <div class="strong">{{ formatAccessEntryType(acc.entryType) }}</div>
+                  <div class="muted">{{ acc.url }}</div>
+                  <el-tag v-if="acc.isPrimary" round disable-transitions>主入口</el-tag>
+                </li>
+              </ul>
+            </el-card>
 
-    <div class="two-col">
-      <div class="card">
-        <SectionHeader title="任务" subtitle="最近 3 条" />
-        <ul class="tasks">
-          <li v-for="job in detail.jobs.slice(0, 3)" :key="job.id">
-            <div>
-              <div class="strong">{{ job.type }}</div>
-              <div class="muted">{{ job.target }}</div>
+            <el-card shadow="never">
+              <SectionHeader title="资源与密码" subtitle="用户侧直接查看 CPU / 内存 / API 调用量 / 管理口令摘要" />
+              <div v-if="operations?.runtime" class="runtime-grid">
+                <div class="runtime-item">
+                  <span class="muted">电源状态</span>
+                  <strong>{{ operations.runtime.powerState }}</strong>
+                </div>
+                <div class="runtime-item">
+                  <span class="muted">CPU</span>
+                  <strong>{{ operations.runtime.cpuUsagePercent }}%</strong>
+                </div>
+                <div class="runtime-item">
+                  <span class="muted">内存</span>
+                  <strong>{{ operations.runtime.memoryUsagePercent }}%</strong>
+                </div>
+                <div class="runtime-item">
+                  <span class="muted">磁盘</span>
+                  <strong>{{ operations.runtime.diskUsagePercent }}%</strong>
+                </div>
+                <div class="runtime-item">
+                  <span class="muted">24h API 请求</span>
+                  <strong>{{ operations.runtime.apiRequests24h }}</strong>
+                </div>
+                <div class="runtime-item">
+                  <span class="muted">24h Token</span>
+                  <strong>{{ operations.runtime.apiTokens24h }}</strong>
+                </div>
+              </div>
+              <div v-if="operations?.credentials" class="credential-box">
+                <span class="muted">管理员账号</span>
+                <strong>{{ operations.credentials.adminUser }}</strong>
+                <span class="muted">
+                  密码摘要 {{ operations.credentials.passwordMasked }} · 最近轮换 {{ operations.credentials.lastRotatedAt }}
+                </span>
+              </div>
+              <div class="ops-actions">
+                <el-button type="primary" plain @click="router.push(`/portal/instances/${detail.instance.id}/workspace`)">
+                  网页版对话
+                </el-button>
+                <el-button type="primary" :loading="powerSubmitting === 'start'" @click="powerAction('start')">开启</el-button>
+                <el-button plain :loading="powerSubmitting === 'stop'" @click="powerAction('stop')">关闭</el-button>
+                <el-button plain :loading="powerSubmitting === 'restart'" @click="powerAction('restart')">重启</el-button>
+                <el-button plain @click="router.push('/portal/tickets')">问题上报</el-button>
+              </div>
+              <el-alert v-if="feedback.error" :closable="false" show-icon type="error" :title="feedback.error" />
+              <el-alert v-else-if="feedback.ops" :closable="false" show-icon type="success" :title="feedback.ops" />
+            </el-card>
+          </div>
+        </TabPanel>
+
+        <TabPanel class="detail-tab-panel">
+          <el-card shadow="never" class="plans-card">
+            <SectionHeader title="套餐与购买" subtitle="查看可购套餐，并为当前实例执行购买 / 续费 / 升级" />
+            <div class="plans-grid">
+              <article v-for="plan in plans" :key="plan.id" class="plan-card">
+                <p class="eyebrow">{{ plan.highlight }}</p>
+                <strong>{{ plan.name }}</strong>
+                <p class="muted">¥{{ plan.monthlyPrice }} / 月 · {{ plan.cpu }} vCPU / {{ plan.memory }} / {{ plan.storage }}</p>
+                <ul class="feature-list">
+                  <li v-for="feature in plan.features" :key="feature">{{ feature }}</li>
+                </ul>
+                <div class="plan-actions">
+                  <el-button type="primary" :loading="purchaseSubmitting === `${plan.code}-buy`" @click="purchasePlan(plan.code, 'buy')">
+                    购买
+                  </el-button>
+                  <el-button plain :loading="purchaseSubmitting === `${plan.code}-renew`" @click="purchasePlan(plan.code, 'renew')">
+                    续费
+                  </el-button>
+                </div>
+              </article>
             </div>
-            <div class="pill">{{ job.status }}</div>
-            <div class="muted">{{ job.startedAt }}</div>
-          </li>
-        </ul>
-      </div>
-    </div>
+            <el-alert v-if="feedback.error" :closable="false" show-icon type="error" :title="feedback.error" />
+            <el-alert v-else-if="feedback.purchase" :closable="false" show-icon type="success" :title="feedback.purchase" />
+          </el-card>
 
-    <div class="card config-card">
-      <SectionHeader title="配置发布" subtitle="编辑模型、域名与备份策略后提交发布" />
-      <div class="config-grid">
-        <label class="config-item">
-          <span class="muted">模型</span>
-          <input v-model="configForm.model" placeholder="例如 gpt-4o" />
-        </label>
-        <label class="config-item">
-          <span class="muted">允许域名（逗号分隔）</span>
-          <input v-model="configForm.allowedOrigins" placeholder="https://example.com,https://a.com" />
-        </label>
-        <label class="config-item">
-          <span class="muted">备份策略</span>
-          <input v-model="configForm.backupPolicy" placeholder="daily / weekly" />
-        </label>
-        <div class="config-item config-actions">
-          <button class="primary" :disabled="configSubmitting" @click="submitConfig">
-            {{ configSubmitting ? '发布中…' : '发布配置' }}
-          </button>
-          <div class="muted small">
-            当前配置版本：{{ detail.config ? `v${detail.config.version}` : '暂无' }} · 最近发布：
-            {{ detail.config?.publishedAt || '—' }}
-          </div>
-        </div>
-      </div>
-      <div class="form-feedback">
-        <span v-if="feedback.error" class="error">{{ feedback.error }}</span>
-        <span v-else-if="feedback.config" class="success">{{ feedback.config }}</span>
-      </div>
-    </div>
+          <el-card shadow="never">
+            <SectionHeader title="任务" subtitle="最近 3 条" />
+            <ul class="tasks">
+              <li v-for="job in detail.jobs.slice(0, 3)" :key="job.id">
+                <div>
+                  <div class="strong">{{ job.type }}</div>
+                  <div class="muted">{{ job.target }}</div>
+                </div>
+                <el-tag round disable-transitions>{{ job.status }}</el-tag>
+                <div class="muted">{{ job.startedAt }}</div>
+              </li>
+            </ul>
+          </el-card>
+        </TabPanel>
 
-    <div class="card">
-      <SectionHeader title="备份" subtitle="最近 3 个" actionLabel="查看更多" />
-      <div class="backup-row">
-        <label>
-          <span class="muted">类型</span>
-          <select v-model="backupForm.type">
-            <option value="manual">manual</option>
-            <option value="scheduled">scheduled</option>
-          </select>
-        </label>
-        <label>
-          <span class="muted">操作人</span>
-          <input v-model="backupForm.operator" />
-        </label>
-        <button class="primary" :disabled="backupSubmitting" @click="submitBackup">
-          {{ backupSubmitting ? '触发中…' : '触发备份' }}
-        </button>
-      </div>
-      <div class="form-feedback">
-        <span v-if="feedback.error" class="error">{{ feedback.error }}</span>
-        <span v-else-if="feedback.backup" class="success">{{ feedback.backup }}</span>
-      </div>
-      <div class="table">
-        <div class="head">
-          <span>名称</span>
-          <span>状态</span>
-          <span>大小</span>
-          <span>时间</span>
-        </div>
-        <div v-for="bk in detail.backups" :key="bk.id" class="row">
-          <span class="strong">{{ bk.name }}</span>
-          <span class="pill">{{ bk.status }}</span>
-          <span>{{ bk.size }}</span>
-          <span class="muted">{{ bk.createdAt }}</span>
-        </div>
-      </div>
-    </div>
+        <TabPanel class="detail-tab-panel">
+          <el-card shadow="never" class="config-card">
+            <SectionHeader title="配置发布" subtitle="编辑模型、域名与备份策略后提交审批" />
+            <div class="config-grid">
+              <label class="config-item">
+                <span class="muted">模型</span>
+                <el-input v-model="configForm.model" placeholder="例如 gpt-4o" />
+              </label>
+              <label class="config-item">
+                <span class="muted">允许域名（逗号分隔）</span>
+                <el-input v-model="configForm.allowedOrigins" placeholder="https://example.com,https://a.com" />
+              </label>
+              <label class="config-item">
+                <span class="muted">备份策略</span>
+                <el-input v-model="configForm.backupPolicy" placeholder="daily / weekly" />
+              </label>
+              <div class="config-item config-actions">
+                <el-button type="primary" :loading="configSubmitting" @click="submitConfig">提交审批</el-button>
+                <div class="muted small">
+                  当前配置版本：{{ detail.config ? `v${detail.config.version}` : '暂无' }} · 最近发布：
+                  {{ detail.config?.publishedAt || '—' }}
+                </div>
+              </div>
+            </div>
+            <el-alert v-if="feedback.error" :closable="false" show-icon type="error" :title="feedback.error" />
+            <el-alert v-else-if="feedback.config" :closable="false" show-icon type="success" :title="feedback.config" />
+          </el-card>
+        </TabPanel>
+
+        <TabPanel class="detail-tab-panel">
+          <el-card shadow="never">
+            <SectionHeader title="备份" subtitle="最近 3 个" actionLabel="查看更多" />
+            <div class="backup-row">
+              <label>
+                <span class="muted">类型</span>
+                <el-select v-model="backupForm.type">
+                  <el-option label="manual" value="manual" />
+                  <el-option label="scheduled" value="scheduled" />
+                </el-select>
+              </label>
+              <label>
+                <span class="muted">操作人</span>
+                <el-input v-model="backupForm.operator" />
+              </label>
+              <el-button type="primary" :loading="backupSubmitting" @click="submitBackup">触发备份</el-button>
+            </div>
+            <el-alert v-if="feedback.error" :closable="false" show-icon type="error" :title="feedback.error" />
+            <el-alert v-else-if="feedback.backup" :closable="false" show-icon type="success" :title="feedback.backup" />
+            <el-table :data="detail.backups" class="surface-table">
+              <el-table-column prop="name" label="名称" min-width="220" />
+              <el-table-column label="状态" min-width="120">
+                <template #default="{ row }">
+                  <el-tag round disable-transitions>{{ row.status }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="size" label="大小" min-width="120" />
+              <el-table-column prop="createdAt" label="时间" min-width="180" />
+            </el-table>
+          </el-card>
+        </TabPanel>
+      </TabPanels>
+    </TabGroup>
   </div>
 </template>
 
@@ -340,30 +370,93 @@ watch(
   text-align: center;
 }
 
-.state-card--error {
-  color: #b91c1c;
+.summary-card {
+  overflow: hidden;
 }
 
-.head {
+.summary-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  gap: 16px;
 }
+
+.summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.summary-chip {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--panel-muted);
+  color: var(--text);
+  font-size: 13px;
+}
+
 .title {
   font-size: 20px;
   font-weight: 700;
 }
+
+.detail-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-tab-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.detail-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 16px 18px;
+  text-align: left;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.detail-tab span {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-tab strong {
+  font-size: 1.05rem;
+  font-variation-settings: "wght" 650;
+}
+
+.detail-tab.selected {
+  border-color: rgba(29, 107, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 244, 255, 0.98));
+  box-shadow: 0 18px 40px rgba(29, 107, 255, 0.08);
+}
+
+.detail-tab-panels,
+.detail-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
 
-.config-card {
-  padding: 14px;
-}
-
+.config-card,
 .plans-card {
   padding: 14px;
 }
@@ -429,14 +522,6 @@ watch(
   background: var(--panel-muted);
 }
 
-.config-item input,
-.backup-row input,
-.backup-row select {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--stroke);
-}
-
 .config-actions {
   gap: 10px;
 }
@@ -446,20 +531,9 @@ watch(
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
   margin: 12px 0;
+  align-items: end;
 }
 
-.form-feedback {
-  min-height: 20px;
-  font-size: 13px;
-}
-
-.error {
-  color: #b91c1c;
-}
-
-.success {
-  color: #15803d;
-}
 .access,
 .tasks {
   display: flex;
@@ -467,6 +541,7 @@ watch(
   gap: 10px;
   margin-top: 6px;
 }
+
 .access li,
 .tasks li {
   display: grid;
@@ -478,27 +553,9 @@ watch(
   border-radius: var(--radius-md);
   background: var(--panel-muted);
 }
-.table {
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-.head,
-.row {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1.4fr;
-  padding: 12px 14px;
-}
-.head {
-  background: var(--panel-muted);
-  color: var(--text-muted);
-  font-weight: 600;
-}
-.row {
-  border-top: 1px solid var(--stroke);
-  align-items: center;
-}
+
 @media (max-width: 1024px) {
+  .detail-tab-list,
   .two-col {
     grid-template-columns: 1fr;
   }
@@ -509,6 +566,12 @@ watch(
 
   .runtime-grid,
   .plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .config-grid {
     grid-template-columns: 1fr;
   }
 }

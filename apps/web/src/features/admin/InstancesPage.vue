@@ -31,7 +31,11 @@ const { data: instances, loading, error } = useAsyncData(() => api.getAdminInsta
         <span>{{ inst.region }}</span>
         <span>{{ inst.plan }}</span>
         <span class="muted">{{ inst.updatedAt }}</span>
-        <span><RouterLink :to="`/admin/instances/${inst.id}`">详情</RouterLink></span>
+        <span class="actions">
+          <RouterLink :to="`/admin/instances/${inst.id}`">详情</RouterLink>
+          <RouterLink :to="`/admin/instances/${inst.id}?tab=diagnostics`">诊断</RouterLink>
+          <RouterLink :to="`/admin/instances/${inst.id}/workspace`">对话</RouterLink>
+        </span>
       </div>
     </div>
   </div>
@@ -73,5 +77,11 @@ const { data: instances, loading, error } = useAsyncData(() => api.getAdminInsta
 }
 .row {
   border-top: 1px solid var(--stroke);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 </style>
