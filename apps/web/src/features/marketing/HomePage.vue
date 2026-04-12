@@ -4,15 +4,11 @@ import { RouterLink, useRouter } from 'vue-router'
 
 import ArchitectureDialog from './components/ArchitectureDialog.vue'
 import ControlPlaneTabs from './components/ControlPlaneTabs.vue'
-import MarketingFaq from './components/MarketingFaq.vue'
 import MarketingMobileMenu from './components/MarketingMobileMenu.vue'
-import QuickEntryPopover from './components/QuickEntryPopover.vue'
-import { useBranding } from '../../lib/brand'
 
 const router = useRouter()
 const showArchitecture = ref(false)
 const showMobileMenu = ref(false)
-const { brand } = useBranding()
 
 const valueCards = [
   {
@@ -35,9 +31,6 @@ const steps = [
   '将租户用户与平台运维分流到两套控制台。',
 ]
 
-function scrollTo(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
 </script>
 
 <template>
@@ -45,625 +38,893 @@ function scrollTo(id: string) {
     <header class="site-header">
       <RouterLink class="brand" to="/">
         <div class="brand-mark">
-          <img v-if="brand.logoUrl" :src="brand.logoUrl" :alt="brand.name" class="brand-logo" />
-          <span v-else>{{ brand.name.slice(0, 2).toUpperCase() }}</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <div>
-          <div class="brand-title">{{ brand.name }}</div>
-          <div class="brand-sub">Platform</div>
-        </div>
+        <span class="brand-text">openClaw</span>
       </RouterLink>
       <nav class="site-nav">
-        <button type="button" @click="scrollTo('values')">价值主张</button>
-        <button type="button" @click="scrollTo('planes')">控制台</button>
-        <button type="button" @click="scrollTo('delivery')">上线节奏</button>
+        <a href="#" class="nav-link">文档</a>
+        <a href="#" class="nav-link">定价</a>
+        <a href="#" class="nav-link">博客</a>
       </nav>
       <div class="site-actions">
-        <QuickEntryPopover />
-        <button class="nav-cta" type="button" @click="router.push('/login')">登录入口</button>
-        <button class="mobile-nav-button" type="button" @click="showMobileMenu = true">菜单</button>
+        <button class="nav-link-btn" type="button" @click="router.push('/login')">登录</button>
+        <button class="nav-primary-btn" type="button" @click="router.push('/login')">注册</button>
       </div>
     </header>
 
     <main class="home-main">
+      <!-- Hero Section -->
       <section class="hero">
-        <div class="hero-copy">
-          <div class="eyebrow">{{ brand.name }} 官网</div>
-          <h1>把 {{ brand.name }} 的运行能力，整理成一套更适合企业落地的平台入口。</h1>
-          <p class="hero-text">
-            这次不只是把首页做漂亮，而是把官网、登录和双控制台的关系讲清楚。Headless UI 负责更定制的品牌交互，业务后台继续保持高效率组件化。
+        <div class="hero-card hero-card-left">
+          <div class="hero-badge">免费试用</div>
+          <h1 class="hero-title">无限令牌，免费试用</h1>
+          <p class="hero-description">
+            体验 openClaw 的全部功能，享受无限令牌。无需信用卡。立即开始构建更智能的 AI 工作流程。
           </p>
           <div class="hero-actions">
-            <button class="primary" type="button" @click="router.push('/login')">开始使用</button>
-            <button class="ghost" type="button" @click="showArchitecture = true">查看架构预览</button>
-            <button class="ghost ghost-soft" type="button" @click="scrollTo('planes')">查看控制台</button>
+            <button class="primary-btn" type="button" @click="router.push('/login')">开始免费试用</button>
+            <button class="secondary-btn" type="button">查看演示</button>
           </div>
-          <div class="hero-footnote">
-            <span class="pill">Portal / Admin 双壳</span>
-            <span class="pill">Headless UI 交互层</span>
-            <span class="pill">Element Plus 业务层</span>
-          </div>
-        </div>
-
-        <div class="hero-stage card">
-          <div class="stage-top">
-            <div>
-              <div class="stage-label">交付重点</div>
-              <strong>实例控制台先行</strong>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-value">10K+</span>
+              <span class="stat-label">活跃用户</span>
             </div>
-            <div class="stage-chip">Phase 1</div>
-          </div>
-
-          <div class="stage-grid">
-            <article class="stage-card">
-              <span>实例</span>
-              <strong>生命周期</strong>
-              <p>创建、配置、备份、恢复与任务跟踪。</p>
-            </article>
-            <article class="stage-card">
-              <span>渠道</span>
-              <strong>统一接入</strong>
-              <p>飞书、企微、钉钉、Slack 等入口集中配置。</p>
-            </article>
-            <article class="stage-card">
-              <span>品牌</span>
-              <strong>更定制的交互层</strong>
-              <p>用 Headless UI 做入口、弹层、切换面板，不再让官网停留在通用后台感。</p>
-            </article>
-            <article class="stage-card accent">
-              <span>体验</span>
-              <strong>原生能力不丢</strong>
-              <p>平台壳层表达业务闭环，原生控制面继续承接调试与运维细节。</p>
-            </article>
+            <div class="stat">
+              <span class="stat-value">99.9%</span>
+              <span class="stat-label">可用性</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">50+</span>
+              <span class="stat-label">集成</span>
+            </div>
           </div>
         </div>
-      </section>
 
-      <section id="values" class="section">
-        <div class="section-head">
-          <div class="eyebrow">价值主张</div>
-          <h2>官网先传达三件事：能快、够稳、可控。</h2>
-        </div>
-        <div class="value-grid">
-          <article v-for="item in valueCards" :key="item.title" class="value-card card">
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.text }}</p>
-          </article>
-        </div>
-      </section>
-
-      <section id="planes" class="section split">
-        <div class="section-head compact">
-          <div class="eyebrow">双控制台</div>
-          <h2>租户入口和平台运维入口分开，并且用 Tab 交互把两套壳层的职责清楚展示出来。</h2>
-        </div>
-        <ControlPlaneTabs />
-      </section>
-
-      <section id="delivery" class="section delivery card">
-        <div class="section-head compact">
-          <div class="eyebrow">上线节奏</div>
-          <h2>第一阶段不做大而全，先把实例控制与接入主链路跑通。</h2>
-        </div>
-        <div class="delivery-grid">
-          <div class="delivery-column">
-            <div class="delivery-kicker">交付路线</div>
-            <ol class="step-list">
-              <li v-for="step in steps" :key="step">{{ step }}</li>
-            </ol>
+        <div class="hero-card hero-card-right">
+          <div class="deploy-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <rect x="4" y="4" width="40" height="40" rx="12" stroke="currentColor" stroke-width="2"/>
+              <path d="M24 16V32M16 24H32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </div>
-          <div class="delivery-column matrix">
-            <div class="matrix-card">
-              <span>可信感</span>
-              <strong>亮色官网 + 登录入口</strong>
+          <h2 class="deploy-title">一键部署</h2>
+          <p class="deploy-description">
+            秒级部署您的 AI 工作流程。无需配置，一键运行。
+          </p>
+          <button class="deploy-btn" type="button" @click="router.push('/login')">
+            <span>立即部署</span>
+          </button>
+          <div class="deploy-features">
+            <div class="feature-item">
+              <span class="feature-dot"></span>
+              <span>即时配置</span>
             </div>
-            <div class="matrix-card">
-              <span>低学习成本</span>
-              <strong>Portal 保持轻量</strong>
+            <div class="feature-item">
+              <span class="feature-dot"></span>
+              <span>自动扩缩</span>
             </div>
-            <div class="matrix-card">
-              <span>控制效率</span>
-              <strong>Admin 深色控制面</strong>
-            </div>
-            <div class="matrix-card">
-              <span>后续扩展</span>
-              <strong>保留真实 IAM / Search / 渠道接线位</strong>
+            <div class="feature-item">
+              <span class="feature-dot"></span>
+              <span>零维护</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section faq-section">
-        <div class="section-head compact">
-          <div class="eyebrow">设计说明</div>
-          <h2>把 Headless UI 放在官网和品牌交互位，保留后台效率组件，这条边界更合理。</h2>
+      <!-- Features Section -->
+      <section class="features">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M9 9H15M9 12H15M9 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">应用场景</h3>
+          <p class="feature-description">
+            探索 openClaw 如何从内容生成到数据处理的各种应用场景提供动力。
+          </p>
+          <a href="#" class="feature-link">
+            了解更多
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7H12M12 7L8 3M12 7L8 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
         </div>
-        <MarketingFaq />
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">优势亮点</h3>
+          <p class="feature-description">
+            为什么选择 openClaw？卓越性能、企业级安全性和无与伦比的定价。
+          </p>
+          <a href="#" class="feature-link">
+            了解更多
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7H12M12 7L8 3M12 7L8 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="feature-card feature-card-empty">
+          <div class="feature-placeholder">
+            <span>更多功能即将推出</span>
+          </div>
+        </div>
       </section>
+
+      <!-- Value Props Section -->
+      <section class="value-props">
+        <div class="value-header">
+          <h2 class="value-title">为开发者构建</h2>
+          <p class="value-subtitle">
+            针对开发者和企业团队设计的 AI 工作流程平台。
+          </p>
+        </div>
+        <div class="value-cards">
+          <div class="value-card" v-for="card in valueCards" :key="card.title">
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.text }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section class="how-it-works">
+        <div class="comparison-header">
+          <h2 class="comparison-title">三步开始使用 openClaw</h2>
+          <p class="comparison-subtitle">
+            无需复杂配置，几分钟内开始运行您的 AI 工作流程。
+          </p>
+        </div>
+        <div class="comparison-content">
+          <div class="workflow-step">
+            <div class="step-number">01</div>
+            <div class="step-content">
+              <h4>部署平台运行层</h4>
+              <p>连接您的数据源和 API</p>
+            </div>
+          </div>
+          <div class="workflow-arrow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">02</div>
+            <div class="step-content">
+              <h4>配置工作流程</h4>
+              <p>使用直观的界面定义您的 AI 工作流程</p>
+            </div>
+          </div>
+          <div class="workflow-arrow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">03</div>
+            <div class="step-content">
+              <h4>监控与优化</h4>
+              <p>实时监控工作流程性能并进行优化</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Use Cases Section -->
+      <section class="use-cases">
+        <div class="use-cases-header">
+          <h2 class="use-cases-title">精选案例</h2>
+          <p class="use-cases-subtitle">
+            学习 openClaw 如何赋能各种业务场景。
+          </p>
+        </div>
+        <div class="use-cases-grid">
+          <div class="use-case">
+            <div class="use-case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 6V10M12 10L8 10M12 10L12 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>内容生成</h3>
+            <p>自动化内容创作和个性化推荐</p>
+          </div>
+          <div class="use-case">
+            <div class="use-case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M15 12H9M12 15V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>数据分析</h3>
+            <p>智能分析和预测性洞察</p>
+          </div>
+          <div class="use-case">
+            <div class="use-case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="4" y="3" width="16" height="12" rx="3" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3>客户支持</h3>
+            <p>24/7 智能客服和自助服务</p>
+          </div>
+          <div class="use-case">
+            <div class="use-case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect x="6" y="6" width="12" height="12" rx="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M9 3V6M15 3V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M6 9H18M6 15H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>文档处理</h3>
+            <p>自动化文档处理和知识管理</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Architecture Section -->
+      <section class="architecture">
+        <div class="architecture-header">
+          <h2 class="architecture-title">技术架构</h2>
+          <p class="architecture-subtitle">
+            基于现代技术栈构建的可扩展平台
+          </p>
+          <button class="architecture-btn" type="button" @click="showArchitecture = true">
+            查看架构详情
+          </button>
+        </div>
+        <div class="architecture-preview">
+          <svg width="100%" height="200" viewBox="0 0 400 200" fill="none">
+            <!-- Simplified architecture diagram -->
+            <rect x="50" y="50" width="300" height="100" rx="10" fill="transparent" stroke="currentColor" stroke-width="2"/>
+            <text x="200" y="110" text-anchor="middle" fill="currentColor" font-size="14">openClaw Platform</text>
+            <path d="M0 100L50 100" stroke="currentColor" stroke-width="2"/>
+            <path d="M350 100L400 100" stroke="currentColor" stroke-width="2"/>
+            <circle cx="30" cy="100" r="8" fill="currentColor"/>
+            <circle cx="370" cy="100" r="8" fill="currentColor"/>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Footer Section -->
+      <footer class="site-footer">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <h3>openClaw</h3>
+            <p>为开发者和企业打造的智能 AI 工作流程平台</p>
+          </div>
+          <div class="footer-links">
+            <div class="footer-column">
+              <h4>产品</h4>
+              <a href="#">功能特性</a>
+              <a href="#">定价</a>
+              <a href="#">文档</a>
+            </div>
+            <div class="footer-column">
+              <h4>公司</h4>
+              <a href="#">关于我们</a>
+              <a href="#">联系我们</a>
+              <a href="#">博客</a>
+            </div>
+            <div class="footer-column">
+              <h4>支持</h4>
+              <a href="#">帮助中心</a>
+              <a href="#">社区论坛</a>
+              <a href="#">状态</a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2024 openClaw. 保留所有权利。</p>
+        </div>
+      </footer>
     </main>
 
-    <ArchitectureDialog :open="showArchitecture" @close="showArchitecture = false" />
-    <MarketingMobileMenu :open="showMobileMenu" @close="showMobileMenu = false" />
+    <!-- Mobile Menu -->
+    <MarketingMobileMenu v-model:show="showMobileMenu" />
+
+    <!-- Architecture Dialog -->
+    <ArchitectureDialog v-model:show="showArchitecture" />
   </div>
 </template>
 
 <style scoped>
 .home-shell {
   min-height: 100vh;
-  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .site-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px 22px;
-  margin: 0 auto 20px;
-  max-width: 1280px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  padding: 1rem 2rem;
+  color: white;
 }
 
 .brand {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: white;
+  font-weight: 600;
+  font-size: 1.25rem;
 }
 
 .brand-mark {
-  width: 46px;
-  height: 46px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-weight: 700;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.2), transparent),
-    linear-gradient(135deg, #0f6bff, #5c7bff 65%, #1ad1ff);
-  box-shadow: 0 14px 30px rgba(29, 107, 255, 0.32);
-}
-
-.brand-logo {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.brand-title {
-  font-size: 1rem;
-  font-variation-settings: "wght" 650;
-}
-
-.brand-sub {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-}
-
-.site-nav,
-.site-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
 }
 
-.site-nav button,
-.nav-cta {
-  border: none;
+.site-nav {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: white;
+}
+
+.site-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-link-btn {
   background: transparent;
-  color: var(--text-muted);
-  font: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.site-nav button:hover,
-.nav-cta:hover {
-  color: var(--text);
+.nav-link-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.nav-cta {
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(29, 107, 255, 0.14);
-  background: rgba(29, 107, 255, 0.08);
-  color: var(--brand);
-  font-variation-settings: "wght" 600;
+.nav-primary-btn {
+  background: white;
+  border: none;
+  color: #667eea;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.mobile-nav-button {
-  display: none;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(255, 255, 255, 0.76);
-  color: var(--text);
+.nav-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .home-main {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  max-width: 1280px;
-  margin: 0 auto;
+  color: white;
 }
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
-  gap: 18px;
-  align-items: stretch;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.hero-copy,
-.hero-stage {
-  position: relative;
-  overflow: hidden;
-  min-height: 560px;
-  border-radius: 32px;
-}
-
-.hero-copy {
+.hero-card {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 44px;
-  background:
-    radial-gradient(circle at 20% 18%, rgba(29, 107, 255, 0.22), transparent 30%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(236, 243, 255, 0.92));
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.08);
+  gap: 1.5rem;
 }
 
-.hero-copy::after {
-  content: "";
-  position: absolute;
-  right: -10%;
-  bottom: -18%;
-  width: 240px;
-  height: 240px;
-  border-radius: 40px;
-  background: linear-gradient(135deg, rgba(29, 107, 255, 0.24), rgba(34, 197, 94, 0.18));
-  transform: rotate(24deg);
-  filter: blur(6px);
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
+.hero-badge {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   width: fit-content;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(29, 107, 255, 0.08);
-  color: var(--brand);
-  font-size: 12px;
-  font-variation-settings: "wght" 620;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
-.hero-copy h1 {
-  margin: 18px 0 16px;
-  max-width: 10ch;
-  font-size: clamp(3rem, 7vw, 5.2rem);
-  line-height: 0.98;
-  font-variation-settings: "wght" 680;
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.hero-text {
-  max-width: 640px;
-  margin: 0;
-  font-size: 1.08rem;
-  line-height: 1.75;
-  color: var(--text-muted);
-}
-
-.hero-actions,
-.hero-footnote {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+.hero-description {
+  font-size: 1.125rem;
+  opacity: 0.8;
+  line-height: 1.6;
 }
 
 .hero-actions {
-  margin-top: 26px;
+  display: flex;
+  gap: 1rem;
 }
 
-.hero-footnote {
-  margin-top: 18px;
+.primary-btn {
+  background: #10b981;
+  border: none;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.primary,
-.ghost {
-  display: inline-flex;
+.primary-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.secondary-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 2rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.deploy-icon {
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 148px;
-  padding: 13px 18px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font: inherit;
+  width: 4rem;
+  height: 4rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
 }
 
-.primary {
-  color: #fff;
-  background: linear-gradient(120deg, #0f6bff, #5c7bff 65%, #1ad1ff);
-  box-shadow: 0 16px 34px rgba(29, 107, 255, 0.28);
+.deploy-title {
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
-.ghost {
-  border-color: rgba(148, 163, 184, 0.24);
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--text);
+.deploy-description {
+  opacity: 0.8;
+  line-height: 1.6;
 }
 
-.ghost-soft {
-  background: rgba(244, 247, 255, 0.96);
+.deploy-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.pill {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+.deploy-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
-.hero-stage {
-  padding: 24px;
-  background:
-    radial-gradient(circle at top right, rgba(34, 197, 94, 0.16), transparent 18%),
-    linear-gradient(165deg, #0d1728, #12213a 55%, #102847);
-  border: 1px solid rgba(96, 165, 250, 0.18);
-  color: #e5edf9;
-}
-
-.hero-stage::before {
-  content: "";
-  position: absolute;
-  inset: 14px;
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  pointer-events: none;
-}
-
-.stage-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.stage-label {
-  color: rgba(226, 232, 240, 0.72);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.stage-chip {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.16);
-  color: #c7ddff;
-  font-size: 12px;
-}
-
-.stage-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 28px;
-}
-
-.stage-card {
+.deploy-features {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 18px;
-  min-height: 150px;
-  border-radius: 24px;
-  background: rgba(8, 15, 29, 0.52);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  backdrop-filter: blur(10px);
+  gap: 0.5rem;
 }
 
-.stage-card span,
-.delivery-kicker {
-  color: rgba(191, 219, 254, 0.76);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.stage-card strong,
-.value-card h3 {
-  font-size: 1.35rem;
-  font-variation-settings: "wght" 650;
-}
-
-.stage-card p,
-.value-card p {
-  margin: 0;
-  color: rgba(226, 232, 240, 0.78);
-  line-height: 1.7;
-}
-
-.stage-card.accent {
-  background: linear-gradient(160deg, rgba(29, 107, 255, 0.24), rgba(12, 17, 26, 0.8));
-}
-
-.section {
+.feature-item {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.section-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 18px;
+.feature-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #10b981;
+  border-radius: 50%;
 }
 
-.section-head h2 {
-  max-width: 920px;
-  margin: 0;
-  font-size: clamp(1.9rem, 4vw, 3rem);
-  line-height: 1.08;
-}
-
-.section-head.compact {
-  align-items: flex-start;
-  justify-content: flex-start;
-}
-
-.value-grid {
+.features {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.feature-card-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.feature-description {
+  opacity: 0.8;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.feature-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.feature-link:hover {
+  text-decoration: underline;
+}
+
+.value-props {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.value-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.value-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.value-subtitle {
+  font-size: 1.125rem;
+  opacity: 0.8;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.value-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
 }
 
 .value-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 22px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.value-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
 .value-card p {
-  color: var(--text-muted);
+  opacity: 0.8;
+  line-height: 1.6;
 }
 
-.delivery {
-  padding: 24px;
+.how-it-works {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.delivery-grid {
+.comparison-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.comparison-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.comparison-subtitle {
+  font-size: 1.125rem;
+  opacity: 0.8;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.comparison-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.workflow-step {
+  text-align: center;
+  flex: 1;
+  max-width: 200px;
+}
+
+.step-number {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin: 0 auto 1rem;
+}
+
+.step-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.step-content p {
+  opacity: 0.8;
+  font-size: 0.875rem;
+}
+
+.workflow-arrow {
+  display: flex;
+  align-items: center;
+}
+
+.use-cases {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.use-cases-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.use-cases-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.use-cases-subtitle {
+  font-size: 1.125rem;
+  opacity: 0.8;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.use-cases-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 18px;
-  align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
 }
 
-.delivery-column {
+.use-case {
+  text-align: center;
+  padding: 2rem;
+}
+
+.use-case-icon {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  margin: 0 auto 1rem;
 }
 
-.step-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 0;
-  padding-left: 22px;
+.use-case h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
-.step-list li {
-  color: var(--text);
-  line-height: 1.7;
+.use-case p {
+  opacity: 0.8;
+  line-height: 1.6;
 }
 
-.matrix {
+.architecture {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.architecture-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.architecture-subtitle {
+  font-size: 1.125rem;
+  opacity: 0.8;
+  margin-bottom: 2rem;
+}
+
+.architecture-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.architecture-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.architecture-preview {
+  margin-top: 2rem;
+}
+
+.site-footer {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 3rem 2rem 1rem;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 2rem;
 }
 
-.matrix-card {
+.footer-brand h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.footer-brand p {
+  opacity: 0.8;
+}
+
+.footer-column {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 18px;
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(29, 107, 255, 0.08), rgba(255, 255, 255, 0.96));
-  border: 1px solid rgba(148, 163, 184, 0.16);
 }
 
-.matrix-card span {
-  color: var(--text-muted);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.footer-column h4 {
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
-.matrix-card strong {
-  font-size: 1.05rem;
+.footer-column a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+  transition: color 0.2s;
 }
 
-.faq-section {
-  padding-bottom: 12px;
+.footer-column a:hover {
+  color: white;
 }
 
-@media (max-width: 1100px) {
-  .hero,
-  .value-grid,
-  .delivery-grid,
-  .matrix {
-    grid-template-columns: 1fr;
-  }
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+  text-align: center;
+  opacity: 0.8;
+}
 
+@media (max-width: 768px) {
   .site-header {
-    position: static;
-    flex-direction: column;
-    align-items: flex-start;
-    border-radius: 28px;
+    padding: 1rem;
   }
-
+  
   .site-nav {
     display: none;
   }
-
-  .hero-stage,
-  .hero-copy {
-    min-height: auto;
+  
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 1rem;
   }
-}
-
-@media (max-width: 760px) {
-  .home-shell {
-    padding: 16px;
+  
+  .hero-title {
+    font-size: 2rem;
   }
-
-  .site-header,
-  .hero-copy,
-  .hero-stage,
-  .delivery {
-    padding: 18px;
+  
+  .hero-actions {
+    flex-direction: column;
   }
-
-.site-actions {
-  width: 100%;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.site-actions :deep(.entry-popover),
-.nav-cta {
-  display: none;
-}
-
-  .mobile-nav-button {
-    display: inline-flex;
+  
+  .hero-stats {
     justify-content: center;
   }
-
-  .hero-copy h1 {
-    max-width: none;
-    font-size: 2.5rem;
+  
+  .comparison-content {
+    flex-direction: column;
+    gap: 1rem;
   }
-
-  .stage-grid,
-  .matrix {
+  
+  .footer-content {
     grid-template-columns: 1fr;
+    gap: 2rem;
   }
 }
 </style>
