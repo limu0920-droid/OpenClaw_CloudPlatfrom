@@ -17,7 +17,6 @@ const { data: authSession } = useAsyncData(() => api.getAuthSession())
 
 onMounted(() => {
   const code = route.query.code as string
-  const state = route.query.state as string
   
   if (code) {
     handleAuthCallback(code, window.location.origin + '/login')
@@ -63,10 +62,6 @@ async function openWechat() {
 
 function goToPortal() {
   router.push('/portal')
-}
-
-function goToAdmin() {
-  router.push('/admin')
 }
 </script>
 
@@ -156,18 +151,6 @@ function goToAdmin() {
           <div class="access-content">
             <strong>进入 Portal</strong>
             <span>租户用户控制台</span>
-          </div>
-        </button>
-
-        <button 
-          class="access-btn admin-btn" 
-          type="button" 
-          @click="goToAdmin"
-        >
-          <div class="access-icon">⚙️</div>
-          <div class="access-content">
-            <strong>进入 Admin</strong>
-            <span>平台管理控制台</span>
           </div>
         </button>
       </div>

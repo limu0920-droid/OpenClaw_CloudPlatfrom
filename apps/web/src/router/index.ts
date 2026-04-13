@@ -1,23 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { api } from '../lib/api'
+import type { AuthSession } from '../lib/types'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'marketing-home',
     component: () => import('../features/marketing/HomePage.vue'),
-    meta: { theme: 'marketing' },
+    meta: { theme: 'marketing', requiredRole: 'guest' },
   },
   {
     path: '/login',
     name: 'login',
     component: () => import('../features/auth/LoginPage.vue'),
-    meta: { theme: 'portal' },
+    meta: { theme: 'portal', requiredRole: 'guest' },
   },
   {
     path: '/portal',
     component: () => import('../layouts/PortalLayout.vue'),
-    meta: { theme: 'portal' },
+    meta: { theme: 'portal', requiredRole: 'user' },
     children: [
       { path: '', name: 'portal-overview', component: () => import('../features/portal/OverviewPage.vue') },
       { path: 'instances', name: 'portal-instances', component: () => import('../features/portal/InstancesPage.vue') },
@@ -52,7 +54,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin',
     component: () => import('../layouts/AdminLayout.vue'),
-    meta: { theme: 'admin' },
+    meta: { theme: 'admin', requiredRole: 'admin' },
     children: [
       { path: '', name: 'admin-overview', component: () => import('../features/admin/OverviewPage.vue') },
       { path: 'tenants', name: 'admin-tenants', component: () => import('../features/admin/TenantsPage.vue') },
@@ -88,11 +90,53 @@ const routes: RouteRecordRaw[] = [
       { path: 'audit', name: 'admin-audit', component: () => import('../features/admin/AuditPage.vue') },
     ],
   },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/',
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach(async (to, _from, next) => {
+  const requiredRole = to.meta.requiredRole as string || 'user'
+  
+  // 公开页面不需要认证
+  if (requiredRole === 'guest') {
+    next()
+    return
+  }
+  
+  try {
+    const session: AuthSession = await api.getAuthSession()
+    
+    if (!session.authenticated) {
+      next('/login')
+      return
+    }
+    
+    const userRole = session.user?.role || ''
+    
+    // 权限检查
+    if (requiredRole === 'admin') {
+      if (userRole !== 'admin') {
+        next('/portal')
+        return
+      }
+    } else if (requiredRole === 'user') {
+      if (!['admin', 'portal', 'user'].includes(userRole)) {
+        next('/login')
+        return
+      }
+    }
+    
+    next()
+  } catch (error) {
+    next('/login')
+  }
 })
 
 export default router

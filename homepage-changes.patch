@@ -1,0 +1,1423 @@
+diff --git a/apps/web/src/features/marketing/HomePage.vue b/apps/web/src/features/marketing/HomePage.vue
+index c8f5274..74de8f1 100644
+--- a/apps/web/src/features/marketing/HomePage.vue
++++ b/apps/web/src/features/marketing/HomePage.vue
+@@ -1,36 +1,68 @@
+ <script setup lang="ts">
+ import { ref } from 'vue'
+ import { RouterLink, useRouter } from 'vue-router'
++import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
+ 
+ import ArchitectureDialog from './components/ArchitectureDialog.vue'
+ import ControlPlaneTabs from './components/ControlPlaneTabs.vue'
+ import MarketingMobileMenu from './components/MarketingMobileMenu.vue'
++import QuickEntryPopover from './components/QuickEntryPopover.vue'
+ 
+ const router = useRouter()
+ const showArchitecture = ref(false)
+ const showMobileMenu = ref(false)
+ 
+-const valueCards = [
++const valueProps = [
+   {
+-    title: '一键部署',
+-    text: '用平台壳层接住实例、渠道、IAM 与搜索配置，先把部署与入口做成稳定闭环。',
++    title: '能快',
++    subtitle: '一键部署',
++    description: '用平台壳层接住实例、渠道、IAM 与搜索配置，先把部署与入口做成稳定闭环。',
++    icon: 'deploy'
+   },
+   {
+-    title: '原生体验',
+-    text: '保留 OpenClaw 的运行与调试能力，不在第一阶段重复造完整原生控制面。',
++    title: '够稳',
++    subtitle: '原生体验',
++    description: '保留 OpenClaw 的运行与调试能力，不在第一阶段重复造完整原生控制面。',
++    icon: 'stable'
+   },
+   {
+-    title: '企业级安全',
+-    text: '预留 Keycloak、审计检索、角色边界与运行状态可观测入口，便于后续接真环境。',
++    title: '可控',
++    subtitle: '企业级安全',
++    description: '预留 Keycloak、审计检索、角色边界与运行状态可观测入口，便于后续接真环境。',
++    icon: 'secure'
++  }
++]
++
++const deliverySteps = [
++  {
++    number: '01',
++    title: '部署平台运行层',
++    description: '创建首个 OpenClaw 实例，建立基础运行环境'
++  },
++  {
++    number: '02',
++    title: '接入统一配置骨架',
++    description: '统一身份、检索和渠道配置接线位就绪'
+   },
++  {
++    number: '03',
++    title: '分流两套控制台',
++    description: '租户用户与平台运维分流到 Portal 和 Admin'
++  }
+ ]
+ 
+-const steps = [
+-  '部署平台运行层，创建首个 OpenClaw 实例。',
+-  '接入统一身份、检索和渠道配置骨架。',
+-  '将租户用户与平台运维分流到两套控制台。',
++const channelLogos = [
++  { name: '飞书', color: '#2862ff' },
++  { name: '企微', color: '#07c160' },
++  { name: '钉钉', color: '#1890ff' },
++  { name: 'Slack', color: '#4a154b' }
+ ]
+ 
++const portalHighlights = [
++  '实例概览、访问入口、配置发布集中在一个视图',
++  '渠道接入和工单提交是用户最直接的动作面',
++  '适合业务用户和交付同学快速定位运行状态'
++]
+ </script>
+ 
+ <template>
+@@ -47,295 +79,191 @@ const steps = [
+         <span class="brand-text">openClaw</span>
+       </RouterLink>
+       <nav class="site-nav">
+-        <a href="#" class="nav-link">文档</a>
+-        <a href="#" class="nav-link">定价</a>
+-        <a href="#" class="nav-link">博客</a>
++        <a href="#value" class="nav-link">价值主张</a>
++        <a href="#control-planes" class="nav-link">双控制台</a>
++        <a href="#channels" class="nav-link">渠道接入</a>
+       </nav>
+       <div class="site-actions">
++        <QuickEntryPopover />
+         <button class="nav-link-btn" type="button" @click="router.push('/login')">登录</button>
+-        <button class="nav-primary-btn" type="button" @click="router.push('/login')">注册</button>
++        <button class="nav-primary-btn" type="button" @click="router.push('/login')">立即开始</button>
+       </div>
+     </header>
+ 
+     <main class="home-main">
+-      <!-- Hero Section -->
+       <section class="hero">
+-        <div class="hero-card hero-card-left">
+-          <div class="hero-badge">免费试用</div>
+-          <h1 class="hero-title">无限令牌，免费试用</h1>
++        <div class="hero-content">
++          <div class="hero-badge">Phase 1 · 实例控制台先行</div>
++          <h1 class="hero-title">能快 · 够稳 · 可控</h1>
+           <p class="hero-description">
+-            体验 openClaw 的全部功能，享受无限令牌。无需信用卡。立即开始构建更智能的 AI 工作流程。
++            用平台壳层接住实例、渠道、IAM 与搜索配置，同时保留 OpenClaw 原生调试能力。
++            让部署先成为稳定闭环，原生控制面继续承接运维细节。
+           </p>
+           <div class="hero-actions">
+-            <button class="primary-btn" type="button" @click="router.push('/login')">开始免费试用</button>
+-            <button class="secondary-btn" type="button">查看演示</button>
+-          </div>
+-          <div class="hero-stats">
+-            <div class="stat">
+-              <span class="stat-value">10K+</span>
+-              <span class="stat-label">活跃用户</span>
+-            </div>
+-            <div class="stat">
+-              <span class="stat-value">99.9%</span>
+-              <span class="stat-label">可用性</span>
+-            </div>
+-            <div class="stat">
+-              <span class="stat-value">50+</span>
+-              <span class="stat-label">集成</span>
+-            </div>
++            <button class="primary-btn" type="button" @click="router.push('/login')">进入控制台</button>
++            <button class="secondary-btn" type="button" @click="showArchitecture = true">查看架构</button>
+           </div>
+         </div>
+-
+-        <div class="hero-card hero-card-right">
+-          <div class="deploy-icon">
+-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+-              <rect x="4" y="4" width="40" height="40" rx="12" stroke="currentColor" stroke-width="2"/>
+-              <path d="M24 16V32M16 24H32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+-            </svg>
+-          </div>
+-          <h2 class="deploy-title">一键部署</h2>
+-          <p class="deploy-description">
+-            秒级部署您的 AI 工作流程。无需配置，一键运行。
+-          </p>
+-          <button class="deploy-btn" type="button" @click="router.push('/login')">
+-            <span>立即部署</span>
+-          </button>
+-          <div class="deploy-features">
+-            <div class="feature-item">
+-              <span class="feature-dot"></span>
+-              <span>即时配置</span>
++        <div class="hero-visual">
++          <div class="hero-card hero-card-primary">
++            <div class="card-header">
++              <div class="card-badge">实例控制台</div>
++              <button class="card-action" type="button">创建实例</button>
+             </div>
+-            <div class="feature-item">
+-              <span class="feature-dot"></span>
+-              <span>自动扩缩</span>
++            <div class="card-stats">
++              <div class="stat-item">
++                <span class="stat-label">运行中</span>
++                <span class="stat-value">3</span>
++              </div>
++              <div class="stat-item">
++                <span class="stat-label">备份</span>
++                <span class="stat-value">12</span>
++              </div>
++              <div class="stat-item">
++                <span class="stat-label">任务</span>
++                <span class="stat-value">8</span>
++              </div>
+             </div>
+-            <div class="feature-item">
+-              <span class="feature-dot"></span>
+-              <span>零维护</span>
++            <div class="card-list">
++              <div class="list-item">
++                <div class="item-dot item-dot-green"></div>
++                <div class="item-content">
++                  <div class="item-title">生产环境实例</div>
++                  <div class="item-meta">最后备份 2 小时前</div>
++                </div>
++                <button class="item-btn" type="button">访问</button>
++              </div>
++              <div class="list-item">
++                <div class="item-dot item-dot-yellow"></div>
++                <div class="item-content">
++                  <div class="item-title">测试环境实例</div>
++                  <div class="item-meta">任务执行中</div>
++                </div>
++                <button class="item-btn" type="button">访问</button>
++              </div>
+             </div>
+           </div>
+         </div>
+       </section>
+ 
+-      <!-- Features Section -->
+-      <section class="features">
+-        <div class="feature-card">
+-          <div class="feature-icon">
+-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/>
+-              <path d="M9 9H15M9 12H15M9 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+-            </svg>
+-          </div>
+-          <h3 class="feature-title">应用场景</h3>
+-          <p class="feature-description">
+-            探索 openClaw 如何从内容生成到数据处理的各种应用场景提供动力。
+-          </p>
+-          <a href="#" class="feature-link">
+-            了解更多
+-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+-              <path d="M2 7H12M12 7L8 3M12 7L8 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+-            </svg>
+-          </a>
++      <section id="value" class="value-section">
++        <div class="section-header">
++          <h2 class="section-title">价值主张</h2>
++          <p class="section-subtitle">官网先传达三件事</p>
+         </div>
+-
+-        <div class="feature-card">
+-          <div class="feature-icon">
+-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+-            </svg>
+-          </div>
+-          <h3 class="feature-title">优势亮点</h3>
+-          <p class="feature-description">
+-            为什么选择 openClaw？卓越性能、企业级安全性和无与伦比的定价。
+-          </p>
+-          <a href="#" class="feature-link">
+-            了解更多
+-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+-              <path d="M2 7H12M12 7L8 3M12 7L8 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+-            </svg>
+-          </a>
+-        </div>
+-
+-        <div class="feature-card feature-card-empty">
+-          <div class="feature-placeholder">
+-            <span>更多功能即将推出</span>
++        <div class="value-grid">
++          <div v-for="prop in valueProps" :key="prop.title" class="value-card">
++            <div class="value-icon">
++              <svg v-if="prop.icon === 'deploy'" width="32" height="32" viewBox="0 0 32 32" fill="none">
++                <rect x="4" y="4" width="24" height="24" rx="6" stroke="currentColor" stroke-width="2"/>
++                <path d="M16 10V22M10 16H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
++              </svg>
++              <svg v-else-if="prop.icon === 'stable'" width="32" height="32" viewBox="0 0 32 32" fill="none">
++                <path d="M16 4L6 9V17C6 22 10 26 16 28C22 26 26 22 26 17V9L16 4Z" stroke="currentColor" stroke-width="2"/>
++                <path d="M12 16L15 19L20 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
++              </svg>
++              <svg v-else-if="prop.icon === 'secure'" width="32" height="32" viewBox="0 0 32 32" fill="none">
++                <rect x="6" y="10" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
++                <path d="M10 10V8C10 5.23858 12.2386 3 15 3H17C19.7614 3 22 5.23858 22 8V10" stroke="currentColor" stroke-width="2"/>
++                <circle cx="16" cy="18" r="2" fill="currentColor"/>
++                <path d="M16 20V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
++              </svg>
++            </div>
++            <div class="value-tag">{{ prop.subtitle }}</div>
++            <h3 class="value-title">{{ prop.title }}</h3>
++            <p class="value-description">{{ prop.description }}</p>
+           </div>
+         </div>
+       </section>
+ 
+-      <!-- Value Props Section -->
+-      <section class="value-props">
+-        <div class="value-header">
+-          <h2 class="value-title">为开发者构建</h2>
+-          <p class="value-subtitle">
+-            针对开发者和企业团队设计的 AI 工作流程平台。
+-          </p>
+-        </div>
+-        <div class="value-cards">
+-          <div class="value-card" v-for="card in valueCards" :key="card.title">
+-            <h3>{{ card.title }}</h3>
+-            <p>{{ card.text }}</p>
+-          </div>
++      <section id="control-planes" class="control-planes-section">
++        <div class="section-header">
++          <h2 class="section-title">双控制台</h2>
++          <p class="section-subtitle">租户入口和平台运维入口分开</p>
+         </div>
++        <ControlPlaneTabs />
+       </section>
+ 
+-      <!-- How It Works Section -->
+-      <section class="how-it-works">
+-        <div class="comparison-header">
+-          <h2 class="comparison-title">三步开始使用 openClaw</h2>
+-          <p class="comparison-subtitle">
+-            无需复杂配置，几分钟内开始运行您的 AI 工作流程。
+-          </p>
++      <section id="channels" class="channels-section">
++        <div class="section-header">
++          <h2 class="section-title">统一接入</h2>
++          <p class="section-subtitle">飞书、企微、钉钉、Slack 等入口集中配置</p>
+         </div>
+-        <div class="comparison-content">
+-          <div class="workflow-step">
+-            <div class="step-number">01</div>
+-            <div class="step-content">
+-              <h4>部署平台运行层</h4>
+-              <p>连接您的数据源和 API</p>
+-            </div>
+-          </div>
+-          <div class="workflow-arrow">
+-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+-            </svg>
+-          </div>
+-          <div class="workflow-step">
+-            <div class="step-number">02</div>
+-            <div class="step-content">
+-              <h4>配置工作流程</h4>
+-              <p>使用直观的界面定义您的 AI 工作流程</p>
+-            </div>
+-          </div>
+-          <div class="workflow-arrow">
+-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+-            </svg>
+-          </div>
+-          <div class="workflow-step">
+-            <div class="step-number">03</div>
+-            <div class="step-content">
+-              <h4>监控与优化</h4>
+-              <p>实时监控工作流程性能并进行优化</p>
++        <div class="channels-grid">
++          <div v-for="channel in channelLogos" :key="channel.name" class="channel-card">
++            <div class="channel-logo" :style="{ backgroundColor: channel.color + '20', color: channel.color }">
++              {{ channel.name.charAt(0) }}
+             </div>
++            <span class="channel-name">{{ channel.name }}</span>
+           </div>
+         </div>
+       </section>
+ 
+-      <!-- Use Cases Section -->
+-      <section class="use-cases">
+-        <div class="use-cases-header">
+-          <h2 class="use-cases-title">精选案例</h2>
+-          <p class="use-cases-subtitle">
+-            学习 openClaw 如何赋能各种业务场景。
+-          </p>
++      <section class="delivery-section">
++        <div class="section-header">
++          <h2 class="section-title">上线节奏</h2>
++          <p class="section-subtitle">第一阶段不做大而全，先把实例控制与接入主链路跑通</p>
+         </div>
+-        <div class="use-cases-grid">
+-          <div class="use-case">
+-            <div class="use-case-icon">
+-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-                <path d="M12 6V10M12 10L8 10M12 10L12 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+-              </svg>
+-            </div>
+-            <h3>内容生成</h3>
+-            <p>自动化内容创作和个性化推荐</p>
+-          </div>
+-          <div class="use-case">
+-            <div class="use-case-icon">
+-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-                <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/>
+-                <path d="M15 12H9M12 15V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+-              </svg>
+-            </div>
+-            <h3>数据分析</h3>
+-            <p>智能分析和预测性洞察</p>
+-          </div>
+-          <div class="use-case">
+-            <div class="use-case-icon">
+-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+-                <rect x="4" y="3" width="16" height="12" rx="3" stroke="currentColor" stroke-width="2"/>
+-              </svg>
++        <div class="delivery-flow">
++          <div v-for="(step, index) in deliverySteps" :key="step.number" class="delivery-step">
++            <div class="step-number">{{ step.number }}</div>
++            <div class="step-content">
++              <h4>{{ step.title }}</h4>
++              <p>{{ step.description }}</p>
+             </div>
+-            <h3>客户支持</h3>
+-            <p>24/7 智能客服和自助服务</p>
+-          </div>
+-          <div class="use-case">
+-            <div class="use-case-icon">
++            <div v-if="index < deliverySteps.length - 1" class="step-arrow">
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+-                <rect x="6" y="6" width="12" height="12" rx="3" stroke="currentColor" stroke-width="2"/>
+-                <path d="M9 3V6M15 3V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+-                <path d="M6 9H18M6 15H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
++                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+               </svg>
+             </div>
+-            <h3>文档处理</h3>
+-            <p>自动化文档处理和知识管理</p>
+           </div>
+         </div>
+       </section>
+ 
+-      <!-- Architecture Section -->
+-      <section class="architecture">
+-        <div class="architecture-header">
+-          <h2 class="architecture-title">技术架构</h2>
+-          <p class="architecture-subtitle">
+-            基于现代技术栈构建的可扩展平台
+-          </p>
+-          <button class="architecture-btn" type="button" @click="showArchitecture = true">
+-            查看架构详情
+-          </button>
+-        </div>
+-        <div class="architecture-preview">
+-          <svg width="100%" height="200" viewBox="0 0 400 200" fill="none">
+-            <!-- Simplified architecture diagram -->
+-            <rect x="50" y="50" width="300" height="100" rx="10" fill="transparent" stroke="currentColor" stroke-width="2"/>
+-            <text x="200" y="110" text-anchor="middle" fill="currentColor" font-size="14">openClaw Platform</text>
+-            <path d="M0 100L50 100" stroke="currentColor" stroke-width="2"/>
+-            <path d="M350 100L400 100" stroke="currentColor" stroke-width="2"/>
+-            <circle cx="30" cy="100" r="8" fill="currentColor"/>
+-            <circle cx="370" cy="100" r="8" fill="currentColor"/>
+-          </svg>
++      <section class="cta-section">
++        <div class="cta-card">
++          <div class="cta-content">
++            <h2>准备好开始了吗？</h2>
++            <p>可信感亮色官网 + 登录入口 · 低学习成本 Portal 保持轻量 · 控制效率 Admin 深色控制面</p>
++          </div>
++          <div class="cta-actions">
++            <button class="primary-btn" type="button" @click="router.push('/login')">立即开始</button>
++          </div>
+         </div>
+       </section>
+ 
+-      <!-- Footer Section -->
+       <footer class="site-footer">
+         <div class="footer-content">
+           <div class="footer-brand">
+             <h3>openClaw</h3>
+-            <p>为开发者和企业打造的智能 AI 工作流程平台</p>
++            <p>实例控制台先行 · 统一渠道接入 · 双控制台职责清晰</p>
+           </div>
+           <div class="footer-links">
+             <div class="footer-column">
+               <h4>产品</h4>
+-              <a href="#">功能特性</a>
+-              <a href="#">定价</a>
+-              <a href="#">文档</a>
++              <a href="#value">价值主张</a>
++              <a href="#control-planes">双控制台</a>
++              <a href="#channels">渠道接入</a>
++            </div>
++            <div class="footer-column">
++              <h4>资源</h4>
++              <a href="#" @click.prevent="showArchitecture = true">架构文档</a>
++              <a href="#">上线节奏</a>
+             </div>
+             <div class="footer-column">
+               <h4>公司</h4>
+               <a href="#">关于我们</a>
+               <a href="#">联系我们</a>
+-              <a href="#">博客</a>
+-            </div>
+-            <div class="footer-column">
+-              <h4>支持</h4>
+-              <a href="#">帮助中心</a>
+-              <a href="#">社区论坛</a>
+-              <a href="#">状态</a>
+             </div>
+           </div>
+         </div>
+         <div class="footer-bottom">
+-          <p>&copy; 2024 openClaw. 保留所有权利。</p>
++          <p>&copy; 2024 openClaw. 后续扩展保留真实 IAM / Search / 渠道接线位。</p>
+         </div>
+       </footer>
+     </main>
+ 
+-    <!-- Mobile Menu -->
+     <MarketingMobileMenu v-model:show="showMobileMenu" />
+-
+-    <!-- Architecture Dialog -->
+     <ArchitectureDialog v-model:show="showArchitecture" />
+   </div>
+ </template>
+@@ -343,30 +271,39 @@ const steps = [
+ <style scoped>
+ .home-shell {
+   min-height: 100vh;
+-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
++  background: #f8fafc;
+ }
+ 
+ .site-header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+-  padding: 1rem 2rem;
+-  color: white;
++  padding: 1.25rem 2rem;
++  background: white;
++  border-bottom: 1px solid #e2e8f0;
++  position: sticky;
++  top: 0;
++  z-index: 50;
+ }
+ 
+ .brand {
+   display: flex;
+   align-items: center;
+-  gap: 0.5rem;
++  gap: 0.75rem;
+   text-decoration: none;
+-  color: white;
+-  font-weight: 600;
++  color: #0f172a;
++  font-weight: 700;
+   font-size: 1.25rem;
+ }
+ 
+ .brand-mark {
+   display: flex;
+   align-items: center;
++  color: #1d6bff;
++}
++
++.brand-text {
++  font-variation-settings: 'wght' 700;
+ }
+ 
+ .site-nav {
+@@ -375,472 +312,519 @@ const steps = [
+ }
+ 
+ .nav-link {
+-  color: rgba(255, 255, 255, 0.8);
++  color: #64748b;
+   text-decoration: none;
++  font-size: 0.9375rem;
+   transition: color 0.2s;
+ }
+ 
+ .nav-link:hover {
+-  color: white;
++  color: #1d6bff;
+ }
+ 
+ .site-actions {
+   display: flex;
+-  gap: 1rem;
++  gap: 0.75rem;
++  align-items: center;
+ }
+ 
+ .nav-link-btn {
+   background: transparent;
+-  border: 1px solid rgba(255, 255, 255, 0.3);
+-  color: white;
+-  padding: 0.5rem 1rem;
+-  border-radius: 0.375rem;
++  border: 1px solid #e2e8f0;
++  color: #475569;
++  padding: 0.625rem 1.25rem;
++  border-radius: 0.75rem;
+   cursor: pointer;
++  font-size: 0.9375rem;
+   transition: all 0.2s;
+ }
+ 
+ .nav-link-btn:hover {
+-  background: rgba(255, 255, 255, 0.1);
++  background: #f1f5f9;
++  border-color: #cbd5e1;
+ }
+ 
+ .nav-primary-btn {
+-  background: white;
++  background: linear-gradient(120deg, #1d6bff, #5c7bff 65%, #1ad1ff);
+   border: none;
+-  color: #667eea;
+-  padding: 0.5rem 1rem;
+-  border-radius: 0.375rem;
++  color: white;
++  padding: 0.625rem 1.5rem;
++  border-radius: 0.75rem;
+   font-weight: 600;
+   cursor: pointer;
++  font-size: 0.9375rem;
+   transition: all 0.2s;
+ }
+ 
+ .nav-primary-btn:hover {
+   transform: translateY(-1px);
+-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
++  box-shadow: 0 4px 14px rgba(29, 107, 255, 0.35);
+ }
+ 
+ .home-main {
+-  color: white;
++  color: #0f172a;
+ }
+ 
+ .hero {
+   display: grid;
+-  grid-template-columns: 1fr 1fr;
++  grid-template-columns: 1.1fr 0.9fr;
+   gap: 4rem;
+-  padding: 4rem 2rem;
++  padding: 5rem 2rem;
+   max-width: 1200px;
+   margin: 0 auto;
++  align-items: center;
+ }
+ 
+-.hero-card {
++.hero-content {
+   display: flex;
+   flex-direction: column;
+   gap: 1.5rem;
+ }
+ 
+ .hero-badge {
+-  background: rgba(255, 255, 255, 0.2);
+-  border: 1px solid rgba(255, 255, 255, 0.3);
+-  color: white;
++  display: inline-flex;
++  align-items: center;
++  gap: 0.5rem;
++  background: #eff6ff;
++  border: 1px solid #bfdbfe;
++  color: #1d4ed8;
+   padding: 0.5rem 1rem;
+-  border-radius: 1rem;
++  border-radius: 999px;
+   font-size: 0.875rem;
+   font-weight: 600;
+   width: fit-content;
+ }
+ 
+ .hero-title {
+-  font-size: 3rem;
+-  font-weight: 700;
+-  line-height: 1.2;
++  font-size: 3.5rem;
++  font-weight: 800;
++  line-height: 1.1;
++  letter-spacing: -0.02em;
++  background: linear-gradient(120deg, #0f172a, #1d6bff 50%, #1ad1ff);
++  -webkit-background-clip: text;
++  -webkit-text-fill-color: transparent;
++  background-clip: text;
+ }
+ 
+ .hero-description {
+   font-size: 1.125rem;
+-  opacity: 0.8;
+-  line-height: 1.6;
++  color: #475569;
++  line-height: 1.7;
++  max-width: 580px;
+ }
+ 
+ .hero-actions {
+   display: flex;
+   gap: 1rem;
++  margin-top: 0.5rem;
+ }
+ 
+ .primary-btn {
+-  background: #10b981;
++  background: linear-gradient(120deg, #1d6bff, #5c7bff 65%, #1ad1ff);
+   border: none;
+   color: white;
+   padding: 1rem 2rem;
+-  border-radius: 0.5rem;
++  border-radius: 0.875rem;
+   font-weight: 600;
++  font-size: 1rem;
+   cursor: pointer;
+   transition: all 0.2s;
+ }
+ 
+ .primary-btn:hover {
+-  background: #059669;
+-  transform: translateY(-1px);
++  transform: translateY(-2px);
++  box-shadow: 0 8px 24px rgba(29, 107, 255, 0.4);
+ }
+ 
+ .secondary-btn {
+-  background: transparent;
+-  border: 1px solid rgba(255, 255, 255, 0.3);
+-  color: white;
++  background: white;
++  border: 1px solid #e2e8f0;
++  color: #475569;
+   padding: 1rem 2rem;
+-  border-radius: 0.5rem;
++  border-radius: 0.875rem;
++  font-weight: 500;
++  font-size: 1rem;
+   cursor: pointer;
+   transition: all 0.2s;
+ }
+ 
+ .secondary-btn:hover {
+-  background: rgba(255, 255, 255, 0.1);
++  background: #f8fafc;
++  border-color: #cbd5e1;
+ }
+ 
+-.hero-stats {
+-  display: flex;
+-  gap: 2rem;
++.hero-visual {
++  position: relative;
+ }
+ 
+-.stat {
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
++.hero-card {
++  background: white;
++  border-radius: 1.5rem;
++  border: 1px solid #e2e8f0;
++  box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.15);
++  overflow: hidden;
+ }
+ 
+-.stat-value {
+-  font-size: 1.5rem;
+-  font-weight: 700;
++.hero-card-primary {
++  padding: 1.5rem;
+ }
+ 
+-.stat-label {
+-  font-size: 0.875rem;
+-  opacity: 0.8;
+-}
+-
+-.deploy-icon {
++.card-header {
+   display: flex;
++  justify-content: space-between;
+   align-items: center;
+-  justify-content: center;
+-  width: 4rem;
+-  height: 4rem;
+-  background: rgba(255, 255, 255, 0.1);
+-  border-radius: 1rem;
++  margin-bottom: 1.5rem;
+ }
+ 
+-.deploy-title {
+-  font-size: 1.5rem;
++.card-badge {
++  background: #f0fdf4;
++  border: 1px solid #bbf7d0;
++  color: #166534;
++  padding: 0.375rem 0.875rem;
++  border-radius: 999px;
++  font-size: 0.8125rem;
+   font-weight: 600;
+ }
+ 
+-.deploy-description {
+-  opacity: 0.8;
+-  line-height: 1.6;
+-}
+-
+-.deploy-btn {
+-  background: rgba(255, 255, 255, 0.2);
+-  border: 1px solid rgba(255, 255, 255, 0.3);
+-  color: white;
+-  padding: 0.75rem 1.5rem;
+-  border-radius: 0.5rem;
++.card-action {
++  background: #eff6ff;
++  border: 1px solid #bfdbfe;
++  color: #1d4ed8;
++  padding: 0.5rem 1rem;
++  border-radius: 0.625rem;
++  font-size: 0.875rem;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s;
+ }
+ 
+-.deploy-btn:hover {
+-  background: rgba(255, 255, 255, 0.3);
++.card-action:hover {
++  background: #dbeafe;
+ }
+ 
+-.deploy-features {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 0.5rem;
++.card-stats {
++  display: grid;
++  grid-template-columns: repeat(3, 1fr);
++  gap: 1rem;
++  margin-bottom: 1.5rem;
+ }
+ 
+-.feature-item {
++.stat-item {
+   display: flex;
++  flex-direction: column;
+   align-items: center;
+-  gap: 0.5rem;
++  padding: 1rem;
++  background: #f8fafc;
++  border-radius: 1rem;
+ }
+ 
+-.feature-dot {
+-  width: 0.5rem;
+-  height: 0.5rem;
+-  background: #10b981;
+-  border-radius: 50%;
++.stat-label {
++  font-size: 0.75rem;
++  color: #64748b;
++  margin-bottom: 0.25rem;
+ }
+ 
+-.features {
+-  display: grid;
+-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+-  gap: 2rem;
+-  padding: 4rem 2rem;
+-  max-width: 1200px;
+-  margin: 0 auto;
++.stat-value {
++  font-size: 1.5rem;
++  font-weight: 700;
++  color: #0f172a;
+ }
+ 
+-.feature-card {
+-  background: rgba(255, 255, 255, 0.1);
+-  border: 1px solid rgba(255, 255, 255, 0.2);
+-  border-radius: 1rem;
+-  padding: 2rem;
++.card-list {
++  display: flex;
++  flex-direction: column;
++  gap: 0.75rem;
+ }
+ 
+-.feature-card-empty {
++.list-item {
+   display: flex;
+   align-items: center;
+-  justify-content: center;
+-  border-style: dashed;
++  gap: 0.875rem;
++  padding: 1rem;
++  background: #f8fafc;
++  border-radius: 1rem;
+ }
+ 
+-.feature-icon {
+-  display: flex;
+-  align-items: center;
+-  justify-content: center;
+-  width: 3rem;
+-  height: 3rem;
+-  background: rgba(255, 255, 255, 0.1);
+-  border-radius: 0.75rem;
+-  margin-bottom: 1rem;
++.item-dot {
++  width: 0.75rem;
++  height: 0.75rem;
++  border-radius: 50%;
++  flex-shrink: 0;
+ }
+ 
+-.feature-title {
+-  font-size: 1.25rem;
+-  font-weight: 600;
+-  margin-bottom: 0.5rem;
++.item-dot-green {
++  background: #22c55e;
+ }
+ 
+-.feature-description {
+-  opacity: 0.8;
+-  line-height: 1.6;
+-  margin-bottom: 1rem;
++.item-dot-yellow {
++  background: #eab308;
++  animation: pulse 2s infinite;
+ }
+ 
+-.feature-link {
+-  display: inline-flex;
+-  align-items: center;
+-  gap: 0.5rem;
+-  color: white;
+-  text-decoration: none;
++@keyframes pulse {
++  0%, 100% { opacity: 1; }
++  50% { opacity: 0.5; }
++}
++
++.item-content {
++  flex: 1;
++  min-width: 0;
++}
++
++.item-title {
+   font-weight: 600;
++  font-size: 0.9375rem;
++  margin-bottom: 0.125rem;
+ }
+ 
+-.feature-link:hover {
+-  text-decoration: underline;
++.item-meta {
++  font-size: 0.8125rem;
++  color: #64748b;
+ }
+ 
+-.value-props {
+-  padding: 4rem 2rem;
+-  max-width: 1200px;
+-  margin: 0 auto;
++.item-btn {
++  background: white;
++  border: 1px solid #e2e8f0;
++  color: #475569;
++  padding: 0.5rem 0.875rem;
++  border-radius: 0.625rem;
++  font-size: 0.8125rem;
++  font-weight: 500;
++  cursor: pointer;
++  transition: all 0.2s;
+ }
+ 
+-.value-header {
++.item-btn:hover {
++  background: #f1f5f9;
++}
++
++.section-header {
+   text-align: center;
+   margin-bottom: 3rem;
+ }
+ 
+-.value-title {
++.section-title {
+   font-size: 2.5rem;
+-  font-weight: 700;
+-  margin-bottom: 1rem;
++  font-weight: 800;
++  margin-bottom: 0.75rem;
++  letter-spacing: -0.02em;
+ }
+ 
+-.value-subtitle {
++.section-subtitle {
+   font-size: 1.125rem;
+-  opacity: 0.8;
+-  max-width: 600px;
++  color: #64748b;
++}
++
++.value-section,
++.control-planes-section,
++.channels-section,
++.delivery-section {
++  padding: 5rem 2rem;
++  max-width: 1200px;
+   margin: 0 auto;
+ }
+ 
+-.value-cards {
++.value-section {
++  background: white;
++}
++
++.value-grid {
+   display: grid;
+-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
++  grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 2rem;
+ }
+ 
+ .value-card {
+-  background: rgba(255, 255, 255, 0.1);
+-  border: 1px solid rgba(255, 255, 255, 0.2);
+-  border-radius: 1rem;
++  background: #f8fafc;
++  border: 1px solid #e2e8f0;
++  border-radius: 1.5rem;
+   padding: 2rem;
++  text-align: center;
++  transition: all 0.2s;
+ }
+ 
+-.value-card h3 {
+-  font-size: 1.25rem;
+-  font-weight: 600;
+-  margin-bottom: 1rem;
+-}
+-
+-.value-card p {
+-  opacity: 0.8;
+-  line-height: 1.6;
++.value-card:hover {
++  transform: translateY(-4px);
++  box-shadow: 0 12px 40px -12px rgba(15, 23, 42, 0.15);
++  border-color: #cbd5e1;
+ }
+ 
+-.how-it-works {
+-  padding: 4rem 2rem;
+-  max-width: 1200px;
+-  margin: 0 auto;
++.value-icon {
++  width: 4rem;
++  height: 4rem;
++  display: grid;
++  place-items: center;
++  margin: 0 auto 1.25rem;
++  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
++  color: #1d6bff;
++  border-radius: 1.25rem;
+ }
+ 
+-.comparison-header {
+-  text-align: center;
+-  margin-bottom: 3rem;
++.value-tag {
++  display: inline-block;
++  background: white;
++  border: 1px solid #e2e8f0;
++  padding: 0.375rem 0.875rem;
++  border-radius: 999px;
++  font-size: 0.8125rem;
++  font-weight: 600;
++  color: #475569;
++  margin-bottom: 1rem;
+ }
+ 
+-.comparison-title {
+-  font-size: 2.5rem;
++.value-card h3 {
++  font-size: 1.5rem;
+   font-weight: 700;
+-  margin-bottom: 1rem;
++  margin-bottom: 0.75rem;
+ }
+ 
+-.comparison-subtitle {
+-  font-size: 1.125rem;
+-  opacity: 0.8;
+-  max-width: 600px;
+-  margin: 0 auto;
++.value-description {
++  color: #64748b;
++  line-height: 1.7;
++  font-size: 0.9375rem;
+ }
+ 
+-.comparison-content {
+-  display: flex;
+-  align-items: center;
+-  justify-content: center;
+-  gap: 2rem;
++.control-planes-section {
++  background: #f8fafc;
+ }
+ 
+-.workflow-step {
+-  text-align: center;
+-  flex: 1;
+-  max-width: 200px;
++.channels-section {
++  background: white;
+ }
+ 
+-.step-number {
+-  background: rgba(255, 255, 255, 0.1);
+-  border-radius: 50%;
+-  width: 3rem;
+-  height: 3rem;
++.channels-grid {
+   display: flex;
+-  align-items: center;
+   justify-content: center;
+-  font-weight: 600;
+-  margin: 0 auto 1rem;
+-}
+-
+-.step-content h4 {
+-  font-size: 1.125rem;
+-  font-weight: 600;
+-  margin-bottom: 0.5rem;
+-}
+-
+-.step-content p {
+-  opacity: 0.8;
+-  font-size: 0.875rem;
++  gap: 2rem;
++  flex-wrap: wrap;
+ }
+ 
+-.workflow-arrow {
++.channel-card {
+   display: flex;
++  flex-direction: column;
+   align-items: center;
++  gap: 0.875rem;
++  padding: 2rem 2.5rem;
++  background: #f8fafc;
++  border: 1px solid #e2e8f0;
++  border-radius: 1.5rem;
++  transition: all 0.2s;
+ }
+ 
+-.use-cases {
+-  padding: 4rem 2rem;
+-  max-width: 1200px;
+-  margin: 0 auto;
++.channel-card:hover {
++  transform: translateY(-4px);
++  box-shadow: 0 12px 40px -12px rgba(15, 23, 42, 0.15);
+ }
+ 
+-.use-cases-header {
+-  text-align: center;
+-  margin-bottom: 3rem;
++.channel-logo {
++  width: 4rem;
++  height: 4rem;
++  display: grid;
++  place-items: center;
++  border-radius: 1.25rem;
++  font-size: 1.5rem;
++  font-weight: 700;
+ }
+ 
+-.use-cases-title {
+-  font-size: 2.5rem;
+-  font-weight: 700;
+-  margin-bottom: 1rem;
++.channel-name {
++  font-weight: 600;
++  font-size: 1rem;
++  color: #334155;
+ }
+ 
+-.use-cases-subtitle {
+-  font-size: 1.125rem;
+-  opacity: 0.8;
+-  max-width: 600px;
+-  margin: 0 auto;
++.delivery-section {
++  background: #f8fafc;
+ }
+ 
+-.use-cases-grid {
+-  display: grid;
+-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
++.delivery-flow {
++  display: flex;
++  align-items: flex-start;
++  justify-content: center;
+   gap: 2rem;
+ }
+ 
+-.use-case {
++.delivery-step {
++  display: flex;
++  flex-direction: column;
++  align-items: center;
+   text-align: center;
+-  padding: 2rem;
++  flex: 1;
++  max-width: 280px;
+ }
+ 
+-.use-case-icon {
+-  display: flex;
+-  align-items: center;
+-  justify-content: center;
+-  width: 4rem;
+-  height: 4rem;
+-  background: rgba(255, 255, 255, 0.1);
++.step-number {
++  width: 3.5rem;
++  height: 3.5rem;
++  display: grid;
++  place-items: center;
++  background: linear-gradient(135deg, #1d6bff, #5c7bff);
++  color: white;
+   border-radius: 1rem;
+-  margin: 0 auto 1rem;
++  font-size: 1.25rem;
++  font-weight: 700;
++  margin-bottom: 1rem;
+ }
+ 
+-.use-case h3 {
+-  font-size: 1.25rem;
+-  font-weight: 600;
++.step-content h4 {
++  font-size: 1.125rem;
++  font-weight: 700;
+   margin-bottom: 0.5rem;
+ }
+ 
+-.use-case p {
+-  opacity: 0.8;
++.step-content p {
++  color: #64748b;
+   line-height: 1.6;
++  font-size: 0.9375rem;
+ }
+ 
+-.architecture {
+-  padding: 4rem 2rem;
+-  max-width: 1200px;
+-  margin: 0 auto;
+-  text-align: center;
++.step-arrow {
++  display: none;
+ }
+ 
+-.architecture-title {
+-  font-size: 2.5rem;
+-  font-weight: 700;
+-  margin-bottom: 1rem;
++.cta-section {
++  padding: 5rem 2rem;
++  background: linear-gradient(135deg, #0f172a, #1e293b);
+ }
+ 
+-.architecture-subtitle {
+-  font-size: 1.125rem;
+-  opacity: 0.8;
+-  margin-bottom: 2rem;
++.cta-card {
++  max-width: 1000px;
++  margin: 0 auto;
++  background: linear-gradient(120deg, #1d6bff, #5c7bff 65%, #1ad1ff);
++  border-radius: 2rem;
++  padding: 3rem;
++  display: flex;
++  justify-content: space-between;
++  align-items: center;
++  gap: 2rem;
+ }
+ 
+-.architecture-btn {
+-  background: rgba(255, 255, 255, 0.2);
+-  border: 1px solid rgba(255, 255, 255, 0.3);
++.cta-content h2 {
+   color: white;
+-  padding: 1rem 2rem;
+-  border-radius: 0.5rem;
+-  font-weight: 600;
+-  cursor: pointer;
+-  transition: all 0.2s;
++  font-size: 2rem;
++  font-weight: 700;
++  margin-bottom: 0.75rem;
+ }
+ 
+-.architecture-btn:hover {
+-  background: rgba(255, 255, 255, 0.3);
++.cta-content p {
++  color: rgba(255, 255, 255, 0.85);
++  font-size: 1rem;
++  line-height: 1.6;
++  max-width: 600px;
++}
++
++.cta-actions .primary-btn {
++  background: white;
++  color: #1d6bff;
+ }
+ 
+-.architecture-preview {
+-  margin-top: 2rem;
++.cta-actions .primary-btn:hover {
++  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
+ }
+ 
+ .site-footer {
+-  background: rgba(0, 0, 0, 0.2);
+-  padding: 3rem 2rem 1rem;
++  background: white;
++  border-top: 1px solid #e2e8f0;
++  padding: 3rem 2rem 1.5rem;
+ }
+ 
+ .footer-content {
+@@ -854,12 +838,13 @@ const steps = [
+ 
+ .footer-brand h3 {
+   font-size: 1.5rem;
+-  font-weight: 600;
++  font-weight: 700;
+   margin-bottom: 0.5rem;
+ }
+ 
+ .footer-brand p {
+-  opacity: 0.8;
++  color: #64748b;
++  line-height: 1.6;
+ }
+ 
+ .footer-column {
+@@ -870,27 +855,29 @@ const steps = [
+ .footer-column h4 {
+   font-weight: 600;
+   margin-bottom: 1rem;
++  color: #334155;
+ }
+ 
+ .footer-column a {
+-  color: rgba(255, 255, 255, 0.8);
++  color: #64748b;
+   text-decoration: none;
+   margin-bottom: 0.5rem;
+   transition: color 0.2s;
+ }
+ 
+ .footer-column a:hover {
+-  color: white;
++  color: #1d6bff;
+ }
+ 
+ .footer-bottom {
+-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+-  padding-top: 1rem;
++  border-top: 1px solid #e2e8f0;
++  padding-top: 1.5rem;
+   text-align: center;
+-  opacity: 0.8;
++  color: #64748b;
++  font-size: 0.9375rem;
+ }
+ 
+-@media (max-width: 768px) {
++@media (max-width: 980px) {
+   .site-header {
+     padding: 1rem;
+   }
+@@ -901,25 +888,41 @@ const steps = [
+   
+   .hero {
+     grid-template-columns: 1fr;
+-    gap: 2rem;
+-    padding: 2rem 1rem;
++    gap: 2.5rem;
++    padding: 3rem 1rem;
+   }
+   
+   .hero-title {
+-    font-size: 2rem;
++    font-size: 2.5rem;
+   }
+   
+   .hero-actions {
+     flex-direction: column;
+   }
+   
+-  .hero-stats {
+-    justify-content: center;
++  .value-grid {
++    grid-template-columns: 1fr;
++  }
++  
++  .delivery-flow {
++    flex-direction: column;
++    align-items: center;
++  }
++  
++  .delivery-step {
++    max-width: 100%;
++  }
++  
++  .step-arrow {
++    display: block;
++    transform: rotate(90deg);
++    margin: 1rem 0;
+   }
+   
+-  .comparison-content {
++  .cta-card {
+     flex-direction: column;
+-    gap: 1rem;
++    text-align: center;
++    padding: 2rem;
+   }
+   
+   .footer-content {
+@@ -927,4 +930,4 @@ const steps = [
+     gap: 2rem;
+   }
+ }
+-</style>
+\ No newline at end of file
++</style>

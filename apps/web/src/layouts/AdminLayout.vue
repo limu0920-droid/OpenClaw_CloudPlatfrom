@@ -1,8 +1,9 @@
 ﻿<script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import { useBranding } from '../lib/brand'
+import { useAuth } from '../composables/useAuth'
 
 const baseNav = [
   { label: '总览', to: '/admin', feature: 'adminEnabled' },
@@ -22,6 +23,8 @@ const baseNav = [
 const route = useRoute()
 const router = useRouter()
 const { brand, features } = useBranding()
+const { isAdmin, refreshSession } = useAuth()
+
 const nav = computed(() =>
   baseNav.filter((item) => {
     const key = item.feature
@@ -31,6 +34,13 @@ const nav = computed(() =>
 const currentMenu = computed(
   () => nav.value.find((item) => (item.to === '/admin' ? route.path === item.to : route.path.startsWith(item.to)))?.to ?? '/admin',
 )
+
+onMounted(async () => {
+  await refreshSession()
+  if (!isAdmin.value) {
+    router.push('/portal')
+  }
+})
 </script>
 
 <template>
