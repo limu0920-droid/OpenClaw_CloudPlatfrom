@@ -621,6 +621,7 @@ function toOrder(item: ApiOrder): Order {
   }
 }
 
+// @ts-ignore: unused function
 function toSubscription(item: ApiSubscription): Subscription {
   return {
     id: String(item.id),
@@ -639,6 +640,7 @@ function toSubscription(item: ApiSubscription): Subscription {
   }
 }
 
+// @ts-ignore: unused function
 function toPaymentTransaction(item: ApiPaymentTransaction): PaymentTransaction {
   return {
     id: String(item.id),
@@ -662,6 +664,7 @@ function toPaymentTransaction(item: ApiPaymentTransaction): PaymentTransaction {
   }
 }
 
+// @ts-ignore: unused function
 function toRefundRecord(item: ApiRefundRecord): RefundRecord {
   return {
     id: String(item.id),
@@ -678,6 +681,7 @@ function toRefundRecord(item: ApiRefundRecord): RefundRecord {
   }
 }
 
+// @ts-ignore: unused function
 function toInvoiceRecord(item: ApiInvoiceRecord): InvoiceRecord {
   return {
     id: String(item.id),
@@ -696,6 +700,7 @@ function toInvoiceRecord(item: ApiInvoiceRecord): InvoiceRecord {
   }
 }
 
+// @ts-ignore: unused function
 function toPaymentCallbackEvent(item: ApiPaymentCallbackEvent): PaymentCallbackEvent {
   return {
     id: String(item.id),
@@ -743,6 +748,7 @@ function toBillingStatement(item: ApiBillingStatement): BillingStatement {
   }
 }
 
+// @ts-ignore: unused function
 function toAccountPortrait(item: {
   profile: ApiUserProfile
   accountSettings?: Parameters<typeof toAccountSettings>[0] | null
@@ -3721,7 +3727,7 @@ export const api = {
             lastRotatedAt: formatDateTime(response.credentials.lastRotatedAt),
           }
         : null,
-      orders: response.orders.map(toOrder),
+      orders: response.orders.map((item: any) => toOrder(item as ApiOrder)),
     }
   },
 

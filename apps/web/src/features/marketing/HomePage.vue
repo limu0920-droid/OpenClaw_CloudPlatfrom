@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue'
 
 import ArchitectureDialog from './components/ArchitectureDialog.vue'
 import ControlPlaneTabs from './components/ControlPlaneTabs.vue'
@@ -56,12 +55,6 @@ const channelLogos = [
   { name: '企微', color: '#07c160' },
   { name: '钉钉', color: '#1890ff' },
   { name: 'Slack', color: '#4a154b' }
-]
-
-const portalHighlights = [
-  '实例概览、访问入口、配置发布集中在一个视图',
-  '渠道接入和工单提交是用户最直接的动作面',
-  '适合业务用户和交付同学快速定位运行状态'
 ]
 </script>
 
@@ -263,8 +256,8 @@ const portalHighlights = [
       </footer>
     </main>
 
-    <MarketingMobileMenu v-model:show="showMobileMenu" />
-    <ArchitectureDialog v-model:show="showArchitecture" />
+    <MarketingMobileMenu :open="showMobileMenu" @close="showMobileMenu = false" />
+    <ArchitectureDialog :open="showArchitecture" @close="showArchitecture = false" />
   </div>
 </template>
 
