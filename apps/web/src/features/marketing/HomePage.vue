@@ -4,11 +4,17 @@ import { RouterLink, useRouter } from 'vue-router'
 
 import ArchitectureDialog from './components/ArchitectureDialog.vue'
 import MarketingMobileMenu from './components/MarketingMobileMenu.vue'
-import QuickEntryPopover from './components/QuickEntryPopover.vue'
 
 const router = useRouter()
 const showArchitecture = ref(false)
 const showMobileMenu = ref(false)
+
+const scrollToSection = (id: string) => {
+  const element = document.getElementById(id)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth' })
+  }
+}
 </script>
 
 <template>
@@ -22,219 +28,172 @@ const showMobileMenu = ref(false)
             <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <span>openClaw</span>
+        <span>OpenClaw</span>
       </RouterLink>
-      <nav class="nav">
-        <a href="#features" class="nav-link">核心特性</a>
-        <a href="#consoles" class="nav-link">用户控制台</a>
-        <a href="#channels" class="nav-link">统一接入</a>
-        <a href="#steps" class="nav-link">产品优势</a>
-      </nav>
+      <div class="header-spacer"></div>
       <div class="header-actions">
-        <QuickEntryPopover />
         <button class="btn-outline" type="button" @click="router.push('/login')">登录</button>
-        <button class="btn-primary" type="button" @click="router.push('/login')">立即开始</button>
+        <button class="btn-primary" type="button" @click="router.push('/login')">注册</button>
       </div>
     </header>
 
     <main class="main">
-      <section class="hero">
-        <div class="hero-content">
-          <div class="phase-badge">Phase 1 · 实例控制台先行</div>
-          <h1 class="hero-title">能快 · 够稳 · 可控</h1>
-          <p class="hero-desc">
-            用平台壳层接住实例、渠道、IAM 与搜索配置，同时保留 OpenClaw 原生调试能力。
-          </p>
-          <div class="hero-buttons">
-            <button class="btn-large" type="button" @click="router.push('/login')">进入控制台</button>
-            <button class="btn-text" type="button" @click="showArchitecture = true">查看架构 →</button>
+      <section class="promo-section">
+        <div class="promo-cards">
+          <div class="promo-card primary">
+            <h3>无限 Token</h3>
+            <p>免费试用</p>
+          </div>
+          <div class="promo-card secondary">
+            <h3>精英人式一键部署</h3>
+            <p>即刻体验</p>
           </div>
         </div>
-        <div class="hero-visual">
-          <div class="preview-card">
-            <div class="preview-header">
-              <span class="preview-tag">实例控制台</span>
-              <button class="preview-btn" type="button">创建实例</button>
+      </section>
+
+      <section class="info-section">
+        <div class="info-cards">
+          <div class="info-card" @click="router.push('/login')">
+            <h3>使用方法</h3>
+            <div class="arrow">→</div>
+          </div>
+          <div class="info-card" @click="scrollToSection('advantages')">
+            <h3>优势</h3>
+            <div class="arrow">→</div>
+          </div>
+          <div class="info-card" @click="scrollToSection('compare')">
+            <h3>对比</h3>
+            <div class="arrow">→</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="compare" class="compare-section">
+        <div class="compare-container">
+          <div class="compare-left">
+            <h2>对比：流程点</h2>
+            <div class="compare-content">
+              <div class="compare-item">
+                <div class="checkmark">✓</div>
+                <span>完整的一体化平台架构</span>
+              </div>
+              <div class="compare-item">
+                <div class="checkmark">✓</div>
+                <span>企业级功能完备性</span>
+              </div>
+              <div class="compare-item">
+                <div class="checkmark">✓</div>
+                <span>严格的生产可靠性</span>
+              </div>
+              <div class="compare-item">
+                <div class="checkmark">✓</div>
+                <span>强大的集成与扩展能力</span>
+              </div>
+              <div class="compare-item">
+                <div class="checkmark">✓</div>
+                <span>实时通信与事件处理</span>
+              </div>
             </div>
-            <div class="preview-stats">
-              <div class="stat">
-                <span class="stat-label">运行中</span>
-                <span class="stat-value">3</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">备份</span>
-                <span class="stat-value">12</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">任务</span>
-                <span class="stat-value">8</span>
-              </div>
-            </div>
-            <div class="preview-list">
-              <div class="list-item">
-                <div class="dot green"></div>
-                <div class="item-info">
-                  <div class="item-name">生产环境实例</div>
-                  <div class="item-meta">最后备份 2 小时前</div>
-                </div>
-                <button class="item-btn" type="button">访问</button>
-              </div>
-              <div class="list-item">
-                <div class="dot yellow"></div>
-                <div class="item-info">
-                  <div class="item-name">测试环境实例</div>
-                  <div class="item-meta">任务执行中</div>
-                </div>
-                <button class="item-btn" type="button">访问</button>
-              </div>
+          </div>
+          <div class="compare-right">
+            <h3>最新作用</h3>
+            <div class="latest-features">
+              <div class="feature-tag">实时通信</div>
+              <div class="feature-tag">SSE事件流</div>
+              <div class="feature-tag">异步回调</div>
+              <div class="feature-tag">企业安全</div>
+              <div class="feature-tag">多渠道接入</div>
+              <div class="feature-tag">容器编排</div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="features" class="section features">
+      <section id="advantages" class="advantages-section">
         <div class="section-head">
-          <h2>核心特性</h2>
-          <p>官网先传达三件事</p>
+          <h2>核心优势</h2>
+          <p>OpenClaw 商业化项目的核心竞争力</p>
         </div>
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <rect x="4" y="4" width="24" height="24" rx="6" stroke="currentColor" stroke-width="2"/>
-                <path d="M16 10V22M10 16H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <div class="advantages-grid">
+          <div class="advantage-card">
+            <div class="advantage-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <div class="feature-tag">一键部署</div>
-            <h3>能快</h3>
-            <p>用平台壳层接住实例、渠道、IAM 与搜索配置，先把部署与入口做成稳定闭环。</p>
+            <h3>完整的一体化平台架构</h3>
+            <p>前后端统一：Vue 3 + Vite 前端与 Go 后端在同一代码仓库中管理，单一后端入口，标准化 Kubernetes 部署</p>
           </div>
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <path d="M16 4L6 9V17C6 22 10 26 16 28C22 26 26 22 26 17V9L16 4Z" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 16L15 19L20 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <div class="advantage-card">
+            <div class="advantage-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            <div class="feature-tag">原生体验</div>
-            <h3>够稳</h3>
-            <p>保留 OpenClaw 的运行与调试能力，不在第一阶段重复造完整原生控制面。</p>
+            <h3>企业级功能完备性</h3>
+            <p>实例、配置、备份、任务、告警、审计全流程覆盖，多渠道接入，Keycloak/OIDC 认证，OpenSearch 检索</p>
           </div>
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <rect x="6" y="10" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M10 10V8C10 5.23858 12.2386 3 15 3H17C19.7614 3 22 5.23858 22 8V10" stroke="currentColor" stroke-width="2"/>
-                <circle cx="16" cy="18" r="2" fill="currentColor"/>
-                <path d="M16 20V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <div class="advantage-card">
+            <div class="advantage-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <div class="feature-tag">企业级安全</div>
-            <h3>可控</h3>
-            <p>预留 Keycloak、审计检索、角色边界与运行状态可观测入口，便于后续接真环境。</p>
+            <h3>严格的生产可靠性</h3>
+            <p>PLATFORM_STRICT_MODE 确保所有依赖就绪，基于 PostgreSQL 的唯一数据源，启动时自动校验，无降级回退</p>
+          </div>
+          <div class="advantage-card">
+            <div class="advantage-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="currentColor" stroke-width="2"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="currentColor" stroke-width="2"/>
+                <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3>强大的集成与扩展能力</h3>
+            <p>工作台桥接，多格式产物预览（web/html、pdf、office），对象存储集成，微信支付 API v3 完整支持</p>
+          </div>
+          <div class="advantage-card">
+            <div class="advantage-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>实时通信与事件处理</h3>
+            <p>SSE 事件流支持实时事件传递和历史记录回放，异步回调平台侧消息桥接，标准化事件格式</p>
+          </div>
+          <div class="advantage-card">
+            <div class="advantage-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path d="M12 15v2" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 9v2" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="6" r="1" fill="currentColor"/>
+                <circle cx="12" cy="18" r="1" fill="currentColor"/>
+              </svg>
+            </div>
+            <h3>完善的运维与监控</h3>
+            <p>健康检查 /healthz、/versionz 端点，详细的生产配置矩阵，完整的发布流程，k6 压测脚本</p>
           </div>
         </div>
       </section>
 
-      <section id="consoles" class="section consoles">
-        <div class="section-head">
-          <h2>统一控制台</h2>
-          <p>简洁直观的用户界面，一站式管理所有资源</p>
-        </div>
-        <div class="console-overview">
-          <div class="console-card">
-            <div class="console-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
-                <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h3>用户控制台</h3>
-            <p>保持轻量、可信和低学习成本，把实例、渠道、备份、任务和工单组织成一条业务主链路。</p>
-            <button class="btn-primary" type="button" @click="router.push('/login')">立即进入</button>
-          </div>
-        </div>
-      </section>
-
-      <section id="channels" class="section channels">
-        <div class="section-head">
-          <h2>统一接入</h2>
-          <p>飞书、企微、钉钉、Slack 等入口集中配置</p>
-        </div>
-        <div class="channels-list">
-          <div class="channel-item">
-            <div class="channel-logo" style="background: #eff6ff; color: #2862ff;">飞</div>
-            <span>飞书</span>
-          </div>
-          <div class="channel-item">
-            <div class="channel-logo" style="background: #f0fdf4; color: #07c160;">企</div>
-            <span>企微</span>
-          </div>
-          <div class="channel-item">
-            <div class="channel-logo" style="background: #eff6ff; color: #1890ff;">钉</div>
-            <span>钉钉</span>
-          </div>
-          <div class="channel-item">
-            <div class="channel-logo" style="background: #f3e8ff; color: #4a154b;">S</div>
-            <span>Slack</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="steps" class="section steps">
-        <div class="section-head">
-          <h2>产品优势</h2>
-          <p>为用户提供高效、稳定、安全的服务体验</p>
-        </div>
-        <div class="steps-flow">
-          <div class="step">
-            <div class="step-num">01</div>
-            <h4>一键部署</h4>
-            <p>快速创建和管理 OpenClaw 实例，无需复杂配置</p>
-          </div>
-          <div class="step-arrow">→</div>
-          <div class="step">
-            <div class="step-num">02</div>
-            <h4>多渠道接入</h4>
-            <p>支持飞书、企微、钉钉、Slack 等多种渠道统一管理</p>
-          </div>
-          <div class="step-arrow">→</div>
-          <div class="step">
-            <div class="step-num">03</div>
-            <h4>企业级安全</h4>
-            <p>提供完善的身份认证和权限管理机制</p>
-          </div>
+      <section class="contact-section">
+        <h2>联系我们</h2>
+        <div class="contact-links">
+          <a href="mailto:contact@openclaw.dev" class="contact-link">邮件</a>
+          <a href="#" class="contact-link">GitHub</a>
+          <a href="#" class="contact-link">文档</a>
+          <a href="#" class="contact-link">社区</a>
+          <a href="#" class="contact-link">支持</a>
         </div>
       </section>
     </main>
 
     <footer class="footer">
-      <div class="footer-content">
-        <div class="footer-brand">
-          <h3>openClaw</h3>
-          <p>实例控制台先行 · 统一渠道接入 · 企业级安全可控</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-col">
-            <h4>产品</h4>
-            <a href="#features">核心特性</a>
-            <a href="#consoles">用户控制台</a>
-            <a href="#channels">渠道接入</a>
-          </div>
-          <div class="footer-col">
-            <h4>资源</h4>
-            <a href="#" @click.prevent="showArchitecture = true">架构文档</a>
-            <a href="#steps">产品优势</a>
-          </div>
-          <div class="footer-col">
-            <h4>联系</h4>
-            <a href="mailto:contact@openclaw.dev">contact@openclaw.dev</a>
-          </div>
-        </div>
-      </div>
       <div class="footer-bottom">
-        <p>&copy; 2024 openClaw. 后续扩展保留真实 IAM / Search / 渠道接线位。</p>
+        <p>&copy; 2024 OpenClaw. 架构完整性 · 生产可靠性 · 功能完备性</p>
       </div>
     </footer>
 
@@ -246,7 +205,7 @@ const showMobileMenu = ref(false)
 <style scoped>
 .home-page {
   min-height: 100vh;
-  background: #f8fafc;
+  background: linear-gradient(180deg, #fef3c7 0%, #f8fafc 100%);
   color: #0f172a;
 }
 
@@ -254,9 +213,9 @@ const showMobileMenu = ref(false)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 2rem;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 2px solid #0f172a;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -268,8 +227,9 @@ const showMobileMenu = ref(false)
   gap: 0.75rem;
   text-decoration: none;
   color: #0f172a;
-  font-weight: 700;
-  font-size: 1.25rem;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
 }
 
 .logo-icon {
@@ -278,572 +238,318 @@ const showMobileMenu = ref(false)
   align-items: center;
 }
 
-.nav {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.nav-link {
-  color: #64748b;
-  text-decoration: none;
-  font-size: 0.9375rem;
-  transition: color 0.2s;
-}
-
-.nav-link:hover {
-  color: #1d6bff;
+.header-spacer {
+  flex: 1;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   align-items: center;
 }
 
 .btn-outline {
   background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.75rem;
+  border: 2px solid #0f172a;
+  color: #0f172a;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0;
   cursor: pointer;
-  font-size: 0.9375rem;
+  font-size: 1rem;
+  font-weight: 700;
   transition: all 0.2s;
 }
 
 .btn-outline:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: #0f172a;
+  color: white;
 }
 
 .btn-primary {
-  background: linear-gradient(120deg, #1d6bff, #5c7bff 65%, #1ad1ff);
-  border: none;
+  background: #0f172a;
+  border: 2px solid #0f172a;
   color: white;
-  padding: 0.625rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   transition: all 0.2s;
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(29, 107, 255, 0.35);
+  background: #1e293b;
+  border-color: #1e293b;
+  transform: translateY(-2px);
 }
 
 .main {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 2rem;
 }
 
-.hero {
+.promo-section {
+  padding: 4rem 0;
+}
+
+.promo-cards {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 4rem;
-  padding: 5rem 2rem;
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
 }
 
-.hero-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.phase-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  width: fit-content;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  background: linear-gradient(120deg, #0f172a, #1d6bff 50%, #1ad1ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero-desc {
-  font-size: 1.125rem;
-  color: #475569;
-  line-height: 1.7;
-  max-width: 580px;
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
-.btn-large {
-  background: linear-gradient(120deg, #1d6bff, #5c7bff 65%, #1ad1ff);
-  border: none;
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 0.875rem;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
+.promo-card {
+  border: 3px solid #0f172a;
+  padding: 3rem;
+  background: white;
+  box-shadow: 8px 8px 0 0 #0f172a;
   transition: all 0.2s;
 }
 
-.btn-large:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(29, 107, 255, 0.4);
+.promo-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 12px 12px 0 0 #0f172a;
 }
 
-.btn-text {
-  background: transparent;
-  border: none;
+.promo-card.primary {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+.promo-card h3 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.promo-card p {
+  font-size: 1.25rem;
   color: #475569;
-  padding: 1rem 2rem;
-  font-weight: 500;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: color 0.2s;
+  font-weight: 600;
 }
 
-.btn-text:hover {
-  color: #1d6bff;
+.info-section {
+  padding: 2rem 0 4rem;
 }
 
-.hero-visual {
-  position: relative;
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
 }
 
-.preview-card {
+.info-card {
+  border: 3px solid #0f172a;
+  padding: 2rem;
   background: white;
-  border-radius: 1.5rem;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.15);
-  padding: 1.5rem;
-}
-
-.preview-header {
+  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.preview-tag {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #166534;
-  padding: 0.375rem 0.875rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.preview-btn {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-  padding: 0.5rem 1rem;
-  border-radius: 0.625rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
   transition: all 0.2s;
 }
 
-.preview-btn:hover {
-  background: #dbeafe;
+.info-card:hover {
+  background: #0f172a;
+  color: white;
 }
 
-.preview-stats {
+.info-card h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.arrow {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.compare-section {
+  padding: 4rem 0;
+  background: white;
+  border: 3px solid #0f172a;
+  margin: 2rem 0;
+}
+
+.compare-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: 2fr 1fr;
+  gap: 3rem;
+  padding: 3rem;
 }
 
-.stat {
+.compare-left h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.compare-content {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+}
+
+.compare-item {
+  display: flex;
   align-items: center;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 1rem;
+  gap: 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 
-.stat-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 0.25rem;
+.checkmark {
+  width: 2rem;
+  height: 2rem;
+  background: #22c55e;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  flex-shrink: 0;
 }
 
-.stat-value {
+.compare-right {
+  border-left: 3px solid #0f172a;
+  padding-left: 3rem;
+}
+
+.compare-right h3 {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
 }
 
-.preview-list {
+.latest-features {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.list-item {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 1rem;
+.feature-tag {
+  display: inline-block;
+  background: #0f172a;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+  width: fit-content;
 }
 
-.dot {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.dot.green {
-  background: #22c55e;
-}
-
-.dot.yellow {
-  background: #eab308;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.item-name {
-  font-weight: 600;
-  font-size: 0.9375rem;
-  margin-bottom: 0.125rem;
-}
-
-.item-meta {
-  font-size: 0.8125rem;
-  color: #64748b;
-}
-
-.item-btn {
-  background: white;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  padding: 0.5rem 0.875rem;
-  border-radius: 0.625rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.item-btn:hover {
-  background: #f1f5f9;
-}
-
-.section {
-  padding: 5rem 2rem;
+.advantages-section {
+  padding: 5rem 0;
 }
 
 .section-head {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 }
 
 .section-head h2 {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 800;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   letter-spacing: -0.02em;
 }
 
 .section-head p {
-  font-size: 1.125rem;
-  color: #64748b;
-}
-
-.features {
-  background: white;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2rem;
-}
-
-.feature-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 1.5rem;
-  padding: 2rem;
-  text-align: center;
-  transition: all 0.2s;
-}
-
-.feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px -12px rgba(15, 23, 42, 0.15);
-  border-color: #cbd5e1;
-}
-
-.feature-icon {
-  width: 4rem;
-  height: 4rem;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 1.25rem;
-  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
-  color: #1d6bff;
-  border-radius: 1.25rem;
-}
-
-.feature-tag {
-  display: inline-block;
-  background: white;
-  border: 1px solid #e2e8f0;
-  padding: 0.375rem 0.875rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 1.25rem;
   color: #475569;
-  margin-bottom: 1rem;
+  font-weight: 600;
 }
 
-.feature-card h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
+.advantages-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
 }
 
-.feature-card p {
-  color: #64748b;
-  line-height: 1.7;
-  font-size: 0.9375rem;
-}
-
-.consoles {
-  background: #f8fafc;
-}
-
-.console-overview {
-  display: flex;
-  justify-content: center;
-}
-
-.console-card {
+.advantage-card {
+  border: 3px solid #0f172a;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 1.5rem;
   padding: 2.5rem;
-  text-align: center;
-  max-width: 500px;
-  box-shadow: 0 12px 40px -12px rgba(15, 23, 42, 0.15);
   transition: all 0.2s;
 }
 
-.console-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.2);
+.advantage-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0 0 #0f172a;
 }
 
-.console-icon {
+.advantage-icon {
   width: 4rem;
   height: 4rem;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #0f172a;
   display: grid;
   place-items: center;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
-  color: #1d6bff;
-  border-radius: 1.25rem;
+  margin-bottom: 1.5rem;
+  color: #0f172a;
 }
 
-.console-card h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
+.advantage-card h3 {
+  font-size: 1.375rem;
+  font-weight: 800;
   margin-bottom: 1rem;
+  letter-spacing: -0.02em;
 }
 
-.console-card p {
-  color: #64748b;
+.advantage-card p {
+  color: #475569;
   line-height: 1.7;
+  font-weight: 500;
+}
+
+.contact-section {
+  padding: 4rem 0;
+  text-align: center;
+  border-top: 3px solid #0f172a;
+}
+
+.contact-section h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
   margin-bottom: 2rem;
-  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
 }
 
-.channels {
-  background: white;
-}
-
-.channels-list {
+.contact-links {
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 
-.channel-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 2rem 2.5rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 1.5rem;
+.contact-link {
+  display: inline-block;
+  border: 2px solid #0f172a;
+  background: white;
+  color: #0f172a;
+  padding: 1rem 2rem;
+  text-decoration: none;
+  font-weight: 700;
   transition: all 0.2s;
 }
 
-.channel-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px -12px rgba(15, 23, 42, 0.15);
-}
-
-.channel-logo {
-  width: 4rem;
-  height: 4rem;
-  display: grid;
-  place-items: center;
-  border-radius: 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.channel-item span {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #334155;
-}
-
-.steps {
-  background: #f8fafc;
-}
-
-.steps-flow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-}
-
-.step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  flex: 1;
-  max-width: 280px;
-}
-
-.step-num {
-  width: 3.5rem;
-  height: 3.5rem;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #1d6bff, #5c7bff);
+.contact-link:hover {
+  background: #0f172a;
   color: white;
-  border-radius: 1rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.step h4 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.step p {
-  color: #64748b;
-  line-height: 1.6;
-  font-size: 0.9375rem;
-}
-
-.step-arrow {
-  font-size: 1.5rem;
-  color: #cbd5e1;
-  font-weight: 700;
 }
 
 .footer {
   background: white;
-  border-top: 1px solid #e2e8f0;
-  padding: 3rem 2rem 1.5rem;
-}
-
-.footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 3rem;
-  margin-bottom: 2rem;
-}
-
-.footer-brand h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.footer-brand p {
-  color: #64748b;
-  line-height: 1.6;
-}
-
-.footer-col {
-  display: flex;
-  flex-direction: column;
-}
-
-.footer-col h4 {
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: #334155;
-}
-
-.footer-col a {
-  color: #64748b;
-  text-decoration: none;
-  margin-bottom: 0.5rem;
-  transition: color 0.2s;
-}
-
-.footer-col a:hover {
-  color: #1d6bff;
+  border-top: 3px solid #0f172a;
+  padding: 2rem;
+  margin-top: 4rem;
 }
 
 .footer-bottom {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1.5rem;
   text-align: center;
-  color: #64748b;
-  font-size: 0.9375rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  color: #475569;
+  font-weight: 600;
 }
 
 @media (max-width: 980px) {
@@ -851,44 +557,32 @@ const showMobileMenu = ref(false)
     padding: 1rem;
   }
 
-  .nav {
-    display: none;
-  }
-
-  .hero {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-    padding: 3rem 1rem;
-  }
-
-  .hero-title {
-    font-size: 2.5rem;
-  }
-
-  .hero-buttons {
-    flex-direction: column;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .steps-flow {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .step {
-    max-width: 100%;
-  }
-
-  .step-arrow {
-    transform: rotate(90deg);
-  }
-
-  .footer-content {
+  .promo-cards {
     grid-template-columns: 1fr;
     gap: 2rem;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-container {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-right {
+    border-left: none;
+    border-top: 3px solid #0f172a;
+    padding-left: 0;
+    padding-top: 2rem;
+  }
+
+  .advantages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-head h2 {
+    font-size: 2rem;
   }
 }
 </style>
