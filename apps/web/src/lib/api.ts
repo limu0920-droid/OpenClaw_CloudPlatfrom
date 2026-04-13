@@ -2072,6 +2072,30 @@ export const api = {
     return request<{ url: string }>(`/api/v1/auth/keycloak/url${suffix}`)
   },
 
+  async getWechatLoginURL(redirectURI?: string) {
+    const suffix = redirectURI ? `?redirect_uri=${encodeURIComponent(redirectURI)}` : ''
+    return request<{ url: string }>(`/api/v1/auth/wechat/url${suffix}`)
+  },
+
+  async exchangeAuthCode(code: string, redirectUri: string) {
+    return request<unknown>('/api/v1/auth/token', {
+      method: 'POST',
+      body: JSON.stringify({ code, redirectUri }),
+    })
+  },
+
+  async refreshAuthSession() {
+    return request<unknown>('/api/v1/auth/refresh', {
+      method: 'POST',
+    })
+  },
+
+  async logout() {
+    return request<unknown>('/api/v1/auth/logout', {
+      method: 'POST',
+    })
+  },
+
   async getSearchConfig(): Promise<SearchConfig> {
     return request<SearchConfig>('/api/v1/search/config')
   },
