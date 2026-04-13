@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 import ArchitectureDialog from './components/ArchitectureDialog.vue'
-import ControlPlaneTabs from './components/ControlPlaneTabs.vue'
 import MarketingMobileMenu from './components/MarketingMobileMenu.vue'
 import QuickEntryPopover from './components/QuickEntryPopover.vue'
 
@@ -27,9 +26,9 @@ const showMobileMenu = ref(false)
       </RouterLink>
       <nav class="nav">
         <a href="#features" class="nav-link">核心特性</a>
-        <a href="#consoles" class="nav-link">双控制台</a>
+        <a href="#consoles" class="nav-link">用户控制台</a>
         <a href="#channels" class="nav-link">统一接入</a>
-        <a href="#steps" class="nav-link">上线节奏</a>
+        <a href="#steps" class="nav-link">产品优势</a>
       </nav>
       <div class="header-actions">
         <QuickEntryPopover />
@@ -139,10 +138,23 @@ const showMobileMenu = ref(false)
 
       <section id="consoles" class="section consoles">
         <div class="section-head">
-          <h2>双控制台</h2>
-          <p>租户入口和平台运维入口分开</p>
+          <h2>统一控制台</h2>
+          <p>简洁直观的用户界面，一站式管理所有资源</p>
         </div>
-        <ControlPlaneTabs />
+        <div class="console-overview">
+          <div class="console-card">
+            <div class="console-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>用户控制台</h3>
+            <p>保持轻量、可信和低学习成本，把实例、渠道、备份、任务和工单组织成一条业务主链路。</p>
+            <button class="btn-primary" type="button" @click="router.push('/login')">立即进入</button>
+          </div>
+        </div>
       </section>
 
       <section id="channels" class="section channels">
@@ -172,26 +184,26 @@ const showMobileMenu = ref(false)
 
       <section id="steps" class="section steps">
         <div class="section-head">
-          <h2>上线节奏</h2>
-          <p>第一阶段不做大而全，先把实例控制与接入主链路跑通</p>
+          <h2>产品优势</h2>
+          <p>为用户提供高效、稳定、安全的服务体验</p>
         </div>
         <div class="steps-flow">
           <div class="step">
             <div class="step-num">01</div>
-            <h4>部署平台运行层</h4>
-            <p>创建首个 OpenClaw 实例，建立基础运行环境</p>
+            <h4>一键部署</h4>
+            <p>快速创建和管理 OpenClaw 实例，无需复杂配置</p>
           </div>
           <div class="step-arrow">→</div>
           <div class="step">
             <div class="step-num">02</div>
-            <h4>接入统一配置骨架</h4>
-            <p>统一身份、检索和渠道配置接线位就绪</p>
+            <h4>多渠道接入</h4>
+            <p>支持飞书、企微、钉钉、Slack 等多种渠道统一管理</p>
           </div>
           <div class="step-arrow">→</div>
           <div class="step">
             <div class="step-num">03</div>
-            <h4>分流两套控制台</h4>
-            <p>租户用户与平台运维分流到 Portal 和 Admin</p>
+            <h4>企业级安全</h4>
+            <p>提供完善的身份认证和权限管理机制</p>
           </div>
         </div>
       </section>
@@ -201,19 +213,19 @@ const showMobileMenu = ref(false)
       <div class="footer-content">
         <div class="footer-brand">
           <h3>openClaw</h3>
-          <p>实例控制台先行 · 统一渠道接入 · 双控制台职责清晰</p>
+          <p>实例控制台先行 · 统一渠道接入 · 企业级安全可控</p>
         </div>
         <div class="footer-links">
           <div class="footer-col">
             <h4>产品</h4>
             <a href="#features">核心特性</a>
-            <a href="#consoles">双控制台</a>
+            <a href="#consoles">用户控制台</a>
             <a href="#channels">渠道接入</a>
           </div>
           <div class="footer-col">
             <h4>资源</h4>
             <a href="#" @click.prevent="showArchitecture = true">架构文档</a>
-            <a href="#steps">上线节奏</a>
+            <a href="#steps">产品优势</a>
           </div>
           <div class="footer-col">
             <h4>联系</h4>
@@ -634,6 +646,51 @@ const showMobileMenu = ref(false)
 
 .consoles {
   background: #f8fafc;
+}
+
+.console-overview {
+  display: flex;
+  justify-content: center;
+}
+
+.console-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 12px 40px -12px rgba(15, 23, 42, 0.15);
+  transition: all 0.2s;
+}
+
+.console-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.2);
+}
+
+.console-icon {
+  width: 4rem;
+  height: 4rem;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+  color: #1d6bff;
+  border-radius: 1.25rem;
+}
+
+.console-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.console-card p {
+  color: #64748b;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  font-size: 0.9375rem;
 }
 
 .channels {
