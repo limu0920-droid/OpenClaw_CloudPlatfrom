@@ -2060,25 +2060,11 @@ export const api = {
   },
 
   async getAuthConfig(): Promise<AuthConfig> {
-    return {
-      enabled: true,
-      keycloak: { enabled: false },
-      wechat: { enabled: false }
-    }
+    return request<AuthConfig>('/api/v1/auth/config')
   },
 
   async getAuthSession(): Promise<AuthSession> {
-    return {
-      authenticated: true,
-      user: {
-        id: '1',
-        tenantId: '1',
-        loginName: 'admin',
-        displayName: 'Admin User',
-        email: 'admin@example.com',
-        role: 'admin'
-      }
-    }
+    return request<AuthSession>('/api/v1/auth/session')
   },
 
   async getKeycloakLoginURL(redirectURI?: string) {
